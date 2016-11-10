@@ -1,0 +1,26 @@
+%YAML:1.0
+---
+# Camera definition stuff
+camL: 1
+camR: 2
+framerate: 2
+cams:
+    - {id: 0, name: Webcam, w: 1280, h: 720}
+    - {id: 1, name: left, w: 1280, h: 720}
+    - {id: 2, name: right, w: 1280, h: 720}
+scaleFactor: 0.75
+blurRadius: 7
+
+# Stereo vision stuff
+# > REQUIRED
+blockSize: 5
+minDisparity: 0
+numDisparities: 128
+# > OPTIONAL
+optional:
+    - disp12MaxDiff: 10
+    - speckleRange: 7
+    - speckleWindowSize: 60
+    - preFilterCap: 1
+    - uniquenessRatio: 0
+    - mode: 1
