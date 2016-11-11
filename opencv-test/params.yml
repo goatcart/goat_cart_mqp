@@ -4,15 +4,14 @@
 cams:
     framerate: 2
     id: [1, 2]
-    size: [1280, 960]
+    size: [1280, 720]
 # Stereo vision stuff
 # > REQUIRED
 matcher:
-    scaleFactor: 0.75
-    blockSize: 7
-    numDisparities: 128
+    scaleFactor: 0.65
+    alg: 0
     disp12MaxDiff: 10
     speckleRange: 7
     speckleWindowSize: 60
-    preFilterCap: 1
-    uniquenessRatio: 0
+    preFilterCap: 63
+    mode: 2

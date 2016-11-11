@@ -11,6 +11,8 @@ fi
 
 echo "MAKE"
 make
-echo "RUNNING"
-cp -f ../params.yml .
-./stereo_vision
+if [ $? -eq 0 ]; then
+    echo "MAKE DONE, RUNNING"
+    cp -f ../params.yml .
+    ./stereo_vision
+fi
