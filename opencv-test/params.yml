@@ -2,13 +2,12 @@
 ---
 # Camera definition stuff
 cams:
-    framerate: 2
     id: [1, 2]
-    size: [1280, 720]
+    size: [1280, 960]
 # Stereo vision stuff
 # > REQUIRED
 matcher:
-    scaleFactor: 0.65
+    scaleFactor: 1
     alg: 0
     disp12MaxDiff: 10
     speckleRange: 7

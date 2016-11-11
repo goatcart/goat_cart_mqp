@@ -95,7 +95,7 @@ void loadSettings(YAML::Node *pStar, struct AppParams *s)
     s->useHH = node.IsScalar() ? node.as<int>() : 0;
 }
 
-int initCam(VideoCapture *cam, int id, int fps, int w, int h)
+int initCam(VideoCapture *cam, int id, int w, int h)
 {
     std::cout << "Opening Camera {{ " << id << " }} ... ";
     cam->open(id);
@@ -137,7 +137,7 @@ Ptr<StereoMatcher> initMatcherSG(struct AppParams *pSettings)
 
 int main (int argc, char** argv )
 {
-    std::cout << "Loading params\n";
+    std::cout << std::endl << "Loading params" << std::endl;
     struct AppParams pSettings;
     YAML::Node params = YAML::LoadFile("params.yml");
     YAML::Node cams_s = params["cams"];
@@ -145,14 +145,14 @@ int main (int argc, char** argv )
     loadSettings(&params, &pSettings);
 
     // Open up cameras
+    std::cout << std::endl << "Opening VideoCapture streams" << std::endl;
     VideoCapture cam_l, cam_r;
-    int fps = cams_s["framerate"].as<int>();
     int w = cams_s["size"][0].as<int>();
     int h = cams_s["size"][1].as<int>();
-    if (initCam(&cam_l, cams_s["id"][0].as<int>(), fps, w, h) == -1) return -1;
-    if (initCam(&cam_r, cams_s["id"][1].as<int>(), fps, w, h) == -1) return -1;
+    if (initCam(&cam_l, cams_s["id"][0].as<int>(), w, h) == -1) return -1;
+    if (initCam(&cam_r, cams_s["id"][1].as<int>(), w, h) == -1) return -1;
 
-    std::cout << "Creating StereoMatcher" << std::endl;
+    std::cout << std::endl << "Creating StereoMatcher" << std::endl;
     Ptr<StereoMatcher> matcher_l;
     if (pSettings.alg) matcher_l = initMatcherSG(&pSettings);
     else matcher_l = initMatcher(&pSettings);
@@ -163,7 +163,7 @@ int main (int argc, char** argv )
 
     std::cout << "[INFO] Nd = " << pSettings.numDisparities << ", Pb = " << P_base(1, pSettings.blockSize) << std::endl;
 
-    std::cout << "Entering main loop" << std::endl;
+    std::cout << std::endl << "Entering main loop" << std::endl;
 
     Mat frameL, frameR, scaleR, scaleL;
     Mat disp_l, disp_r, disp_f, disp_vis;
