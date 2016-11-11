@@ -3,12 +3,15 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <thread>
+#include <chrono>
 #include <stdio.h>
 
 /** OpenCV **/
 #include <opencv2/core.hpp>
 //#include <opencv2/core/utility.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/ximgproc.hpp>
 #include <opencv2/videoio.hpp>
 //#include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
@@ -43,26 +46,61 @@ mode: 1
 #define FPS 1
 
 struct AppParams {
-    int framerate;
+float scaleFactor;
     int blockSize;
     int numDisparities;
-    int minDisparity;
-    int blurRadius;
-    float scaleFactor;
-    int numCams;
-    int camL;
-    int camR;
+    int disp12MaxDiff;
+    int speckleRange;
+    int speckleWindowSize;
+    int preFilterCap;
+    int uniquenessRatio;
 };
 
-void DoTestCalc (VideoCapture *caps, struct AppParams *pSettings)
+void loadSettings(YAML::Node *pStar, struct AppParams *s)
 {
-    Mat frame, blur, scale;
-    caps[0] >> frame;
-    GaussianBlur(frame, blur, Size(pSettings->blurRadius, pSettings->blurRadius), 0, 0);
-    resize(blur, scale, Size(), pSettings->scaleFactor, pSettings->scaleFactor, INTER_AREA);
-    std::stringstream title;
-    title << "Frame (FPS: " << caps[0].get(CAP_PROP_FPS)  << ")";
-    imshow(title.str(), scale);
+    YAML::Node p = *pStar;
+    YAML::Node node;
+
+    node = p["scaleFactor"];
+    s->scaleFactor = node.IsScalar() ? node.as<float>() : DEFAULT_SCALE_FACTOR;
+
+    node = p["blockSize"];
+    s->blockSize = node.IsScalar() ? node.as<int>() : DEFAULT_BLOCK_SIZE;
+
+    node = p["numDisparities"];
+    s->numDisparities = node.IsScalar() ? node.as<int>() : DEFAULT_DISP_COUNT;
+
+    node = p["disp12MaxDiff"];
+    s->disp12MaxDiff = node.IsScalar() ? node.as<int>() : DEFAULT_D12_MAX_DIFF;
+
+    node = p["speckleRange"];
+    s->speckleRange = node.IsScalar() ? node.as<int>() : DEFAULT_SPECKLE_RANGE;
+
+    node = p["speckleWindowSize"];
+    s->speckleWindowSize = node.IsScalar() ? node.as<int>() : DEFAULT_SPECKE_WS;
+
+    node = p["preFilterCap"];
+    s->preFilterCap = node.IsScalar() ? node.as<int>() : DEFAULT_PF_CAP;
+
+    node = p["uniquenessRatio"];
+    s->uniquenessRatio = node.IsScalar() ? node.as<int>() : DEFAULT_UNIQ_RATIO;
+}
+
+int initCam(VideoCapture *cam, int id, int fps, int w, int h)
+{
+    std::cout << "Opening Camera {{ " << id << " }} ... ";
+    cam->open(id);
+    if (!cam->isOpened())
+    {
+        std::cout << "FAIL" << std::endl;
+        return -1;
+    }
+//    cam->set(CAP_PROP_FPS,          fps);
+    cam->set(CAP_PROP_MODE,         CAP_MODE_GRAY);
+    cam->set(CAP_PROP_FRAME_WIDTH,  w);
+    cam->set(CAP_PROP_FRAME_HEIGHT, h);
+    std::cout << "OK" << std::endl;
+    return 0;
 }
 
 int main (int argc, char** argv )
@@ -70,80 +108,42 @@ int main (int argc, char** argv )
     std::cout << "Loading params\n";
     struct AppParams pSettings;
     YAML::Node params = YAML::LoadFile("params.yml");
-    YAML::Node cams = params["cams"];
-    YAML::Node node;
+    YAML::Node cams_s = params["cams"];
+    YAML::Node matcher_s = params["matcher"];
 
-    node = params["framerate"];
-    pSettings.framerate = node.IsScalar() ? node.as<int>() : DEFAULT_FRAMERATE;
-
-    node = params["blockSize"];
-    pSettings.blockSize = node.IsScalar() ? node.as<int>() : DEFAULT_BLOCK_SIZE;
-
-    node = params["numDisparities"];
-    pSettings.numDisparities = node.IsScalar() ? node.as<int>() : DEFAULT_DISPARITY_COUNT;
-
-    node = params["minDisparity"];
-    pSettings.minDisparity = node.IsScalar() ? node.as<int>() : DEFAULT_MIN_DISPARITIES;
-
-    node = params["blurRadius"];
-    pSettings.blurRadius = node.IsScalar() ? node.as<int>() : DEFAULT_BLUR_RADIUS;
-
-    node = params["scaleFactor"];
-    pSettings.scaleFactor = node.IsScalar() ? node.as<float>() : DEFAULT_SCALE_FACTOR;
-
-    node = params["camL"];
-    pSettings.camL = node.IsScalar() ? node.as<int>() : DEFAULT_LEFT_CAM_INDEX;
-
-    node = params["camR"];
-    pSettings.camR = node.IsScalar() ? node.as<int>() : DEFAULT_RIGHT_CAM_INDEX;
+    loadSettings(&matcher_s, &pSettings);
 
     // Open up cameras
-    pSettings.numCams = cams.size();
-    VideoCapture caps[pSettings.numCams];
-    std::cout << "Opening Camera Streams (num = " << pSettings.numCams << ")" << std::endl;
-    for (size_t i = 0; i < pSettings.numCams; i++)
-    {
-        std::cout << "Opening Camera {{ " << cams[i]["name"].as<std::string>() << " }} ... ";
-        caps[i].open(cams[i]["id"].as<int>());
-        if (!caps[i].isOpened())
-        {
-            std::cout << "FAIL" << std::endl;
-            return -1;
-        }
-        caps[i].set(CAP_PROP_FPS,          pSettings.framerate);
-        caps[i].set(CAP_PROP_MODE,         CAP_MODE_GRAY);
-        caps[i].set(CAP_PROP_FRAME_WIDTH,  cams[i]["w"].as<int>());
-        caps[i].set(CAP_PROP_FRAME_HEIGHT, cams[i]["h"].as<int>());
-        std::cout << "OK" << std::endl;
-    }
+    VideoCapture cam_l, cam_r;
+    int fps = cams_s["framerate"].as<int>();
+    int w = cams_s["size"][0].as<int>();
+    int h = cams_s["size"][1].as<int>();
+    if (initCam(&cam_l, cams_s["id"][0].as<int>(), fps, w, h) == -1) return -1;
+    if (initCam(&cam_r, cams_s["id"][1].as<int>(), fps, w, h) == -1) return -1;
 
     std::cout << "Creating StereoMatcher" << std::endl;
-    Ptr<StereoSGBM> matcher = StereoSGBM::create(pSettings.minDisparity, pSettings.numDisparities, pSettings.blockSize);
+    Ptr<StereoSGBM> matcher = StereoSGBM::create(0, pSettings.numDisparities, pSettings.blockSize);
     matcher->setP1(P_base(1, pSettings.blockSize));
     matcher->setP2(4 * P_base(1, pSettings.blockSize));
-    matcher->setDisp12MaxDiff(10);
-    matcher->setSpeckleRange(7);
-    matcher->setSpeckleWindowSize(60);
-    matcher->setPreFilterCap(1);
-    matcher->setUniquenessRatio(0);
-    matcher->setMode(StereoSGBM::MODE_HH);
+    matcher->setDisp12MaxDiff(pSettings.disp12MaxDiff);
+    matcher->setSpeckleRange(pSettings.speckleRange);
+    matcher->setSpeckleWindowSize(pSettings.speckleWindowSize);
+    matcher->setPreFilterCap(pSettings.preFilterCap);
+    matcher->setUniquenessRatio(pSettings.uniquenessRatio);
 
     std::cout << "Entering main loop" << std::endl;
 
-    Mat frameL, frameR, blurL, blurR, scaleR, scaleL;
-    Mat disp, disp8, disp_color;
+    Mat frameL, frameR, scaleR, scaleL;
+    Mat disp, disp_vis;
     for (;;)
     {
-        caps[pSettings.camL] >> frameL;
-        caps[pSettings.camR] >> frameR;
-        GaussianBlur(frameL, blurL, Size(pSettings.blurRadius, pSettings.blurRadius), 0, 0);
-        resize(blurL, scaleL, Size(), pSettings.scaleFactor, pSettings.scaleFactor);
-        GaussianBlur(frameR, blurR, Size(pSettings.blurRadius, pSettings.blurRadius), 0, 0);
-        resize(blurR, scaleR, Size(), pSettings.scaleFactor, pSettings.scaleFactor);
+        cam_l >> frameL;
+        cam_r >> frameR;
+        resize(frameL, scaleL, Size(), pSettings.scaleFactor, pSettings.scaleFactor);
+        resize(frameR, scaleR, Size(), pSettings.scaleFactor, pSettings.scaleFactor);
         matcher->compute(scaleL, scaleR, disp);
-        disp.convertTo(disp8, CV_8U, 255/(pSettings.numDisparities*16.));
-        cvtColor(disp8, disp_color, CV_GRAY2RGB);
-        imshow("Disparity Map", disp_color);
+        ximgproc::getDisparityVis(disp, disp_vis, 2);
+        imshow("Disparity Map", disp_vis);
         if ((char) waitKey(1) == 'q') break;
     }
 
