@@ -2,12 +2,12 @@
 
 if [ ! -d "build" ]; then
     mkdir build
-    cd build
-    echo "CMAKE"
-    cmake ..
-else
-    cd build
 fi
+
+cd build
+
+echo "CMAKE"
+cmake ..
 
 echo "MAKE"
 make

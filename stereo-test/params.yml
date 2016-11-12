@@ -7,7 +7,7 @@ cams:
 # Stereo vision stuff
 # > REQUIRED
 matcher:
-    scaleFactor: 1
+    scaleFactor: 0.5
     alg: 0
     disp12MaxDiff: 10
     speckleRange: 7
