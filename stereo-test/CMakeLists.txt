@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.8)
+project( stereo_vision )
+set( YAML_CPP_FLAG "-lyaml-cpp" )
+find_package( OpenCV REQUIRED )
+find_package( yaml-cpp REQUIRED )
+add_executable( stereo_vision main.cpp )
+target_link_libraries( stereo_vision ${OpenCV_LIBS} yaml-cpp)
