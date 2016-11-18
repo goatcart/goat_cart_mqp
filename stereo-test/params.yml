@@ -1,16 +1,34 @@
 %YAML:1.0
 ---
 # Camera definition stuff
-cams:
-    id: [1, 2]
-    size: [1280, 960]
+video:
+    sources:
+        - name: webcam
+          id: 0
+          on: 0
+        - name: left
+          id: 1
+          res: [1280, 960]
+#          on: 0
+        - name: right
+          id: 2
+          res: [1280, 960]
+#          on: 0
+    defaults:
+        fps: 30
+        res: [1280, 720]
+        on: 1
+        scale: 0.75
+    contrib: 0.65
 # Stereo vision stuff
 # > REQUIRED
 matcher:
-    scaleFactor: 0.5
+    source: [Left, Right]
     alg: 0
     disp12MaxDiff: 10
     speckleRange: 7
     speckleWindowSize: 60
     preFilterCap: 63
     mode: 2
+    uniquenessRatio: 0
+    main_cam: 1

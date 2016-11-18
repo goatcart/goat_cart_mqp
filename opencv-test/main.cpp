@@ -85,20 +85,19 @@ int main (int argc, char** argv )
     std::map<std::string, VidStream> caps;
     for (int i = 0; i < cams_s.size(); i++)
     {
-        caps[cams_s[i]["name"].as<std::string>()].open(cams_s[i]);
+        caps[cams_s[i]["name"].as<std::string>()].open(cams_s[i], VidStream::filtGray | VidStream::filtResize);
     }
 
     std::cout << std::endl << "Entering main loop" << std::endl;
 
     ts_frame frame;
-    std::shared_ptr<VidStream> cam_l(&caps["left"]);
+    VidStream *cam_l = &caps[Settings::get()["cam"].as<std::string>()];
     cam_l->start();
     for (;;)
     {
         bool ready = cam_l->getFrame(frame);
         if (ready) imshow("Cam", frame.frame);
-        if ((char) waitKey(1) == 'q') break;
-        std::this_thread::sleep_for(1s);
+        if ((char) waitKey(30) == 'q') break;
     }
     cam_l->stop();
     /**/

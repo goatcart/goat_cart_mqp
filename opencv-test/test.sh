@@ -8,6 +8,7 @@ cd build
 
 echo "CMAKE"
 cmake ..
+
 echo "MAKE"
 make
 if [ $? -eq 0 ]; then

@@ -5,10 +5,11 @@ video:
     sources:
         - name: webcam
           id: 0
-          on: 0
+#          on: 0
         - name: left
           id: 1
           res: [1280, 960]
+          on: 0
         - name: right
           id: 2
           res: [1280, 960]
@@ -18,7 +19,7 @@ video:
         res: [1280, 720]
         on: 1
         scale: 0.75
-    contrib: 0.75
+    contrib: 0.65
 # Stereo vision stuff
 # > REQUIRED
 matcher:
@@ -32,3 +33,4 @@ matcher:
 test:
     t1: {a: 2}
     t2: {a: 1, b: 2, c: 3}
+cam: webcam

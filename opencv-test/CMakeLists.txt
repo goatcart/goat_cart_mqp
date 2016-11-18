@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project( stereo_vision )
+project( opencv_test )
 set( YAML_CPP_FLAG "-lyaml-cpp" )
 find_package( OpenCV REQUIRED )
 find_package( yaml-cpp REQUIRED )
