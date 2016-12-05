@@ -55,7 +55,7 @@ void loadSettings(struct AppParams &s)
     else s.blockSize = 15;
 
     int main_cam = m["main_cam"].as<int>();
-    int default_width = p["video"]["sources"][main_cam]["res"][0].as<int>();
+    int default_width = p["video"]["src-rez"][0].as<int>();
     s.numDisparities = CALC_DISP(default_width, s.scaleFactor);
 
     node = m["disp12MaxDiff"];
@@ -87,24 +87,22 @@ Ptr<StereoMatcher> initMatcher(struct AppParams *pSettings)
     return matcher;
 }
 
+
+
 int main (int argc, char** argv )
 {
     using namespace std::chrono_literals;
     //-
     std::cout << std::endl << "Loading params" << std::endl;
-    YAML::Node cams_s = Settings::get()["video"]["sources"];
+    YAML::Node cams_i = Settings::get()["video"];
     struct AppParams pSettings;
 
     loadSettings(pSettings);
 
     // Open up cameras
     std::cout << std::endl << "Opening VideoCapture streams" << std::endl;
-    std::map<std::string, VidStream> caps;
-    for(int i = 0; i < cams_s.size(); i++)
-    {
-        caps[cams_s[i]["name"].as<std::string>()].open(cams_s[i],
-            VidStream::filtResize + VidStream::filtGray);
-    }
+    int ids[] = { cams_i["left"].as<int>(), cams_i["right"].as<int>() };
+    VidStream<2> cam(ids);
 
     std::cout << std::endl << "Creating StereoMatcher" << std::endl;
     Ptr<StereoMatcher> matcher_l = initMatcher(&pSettings);
@@ -115,38 +113,33 @@ int main (int argc, char** argv )
 
     std::cout << std::endl << "Entering main loop" << std::endl;
 
-    ts_frame frame_l, frame_r;
-    VidStream *cam_l = &caps["left"];
-    VidStream *cam_r = &caps["right"];
+    ts_frame<2> frames;
     Mat disp_l, disp_r, disp_f, disp_vis;
-    cam_l->start();
-    cam_r->start();
+    cam.start();
     std::string tm_cap;
     double avg_time = 0;
 #define DV disp_vis
     for (;;)
     {
-        bool ready_l = cam_l->getFrame(frame_l);
-        bool ready_r = cam_r->getFrame(frame_r);
-        if (ready_l && ready_r)
+        bool ready = cam.getFrame(frames);
+        if (ready)
         {
             time_point<Clock> start = Clock::now();
-            matcher_l->compute(frame_l.frame, frame_r.frame, disp_l);
-            matcher_r->compute(frame_r.frame, frame_l.frame, disp_r);
-            wls_filter->filter(disp_l, frame_l.frame, disp_f, disp_r);
+            matcher_l->compute(frames.frame[0], frames.frame[1], disp_l);
+            matcher_r->compute(frames.frame[1], frames.frame[0], disp_r);
+            wls_filter->filter(disp_l, frames.frame[0], disp_f, disp_r);
             ximgproc::getDisparityVis(disp_f, disp_vis, 1.75);
             time_point<Clock> end = Clock::now();
-	    // Calc + disp filter time
+            // Calc + disp filter time
             milliseconds diff = duration_cast<milliseconds>(end - start);
-	    avg_time = avg_time * 0.75 + diff.count() * 0.25;
-            tm_cap = std::to_string((int) (avg_time + 0.5));
+	        avg_time = avg_time * 0.75 + diff.count() * 0.25;
+            tm_cap = std::to_string((int) (cam.avg_time() + 0.5));
             putText(DV, tm_cap, Point(10, 100), FONT_HERSHEY_PLAIN, 2.0, 	Scalar(255.0, 255.0, 255.0), 2);
             imshow("Disparity Map", DV);
         }
         if ((char) waitKey(50) == 'q') break;
     }
-    cam_l->stop();
-    cam_r->stop();
+    cam.stop();
 
     return 0;
 }

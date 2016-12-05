@@ -1,0 +1,22 @@
+%YAML:1.0
+---
+# Camera definition stuff
+video:
+    left: 0
+    right: 1
+    source: [Left, Right]
+    fps: 30
+    src-rez: [1280, 720]
+    scale: 0.65
+    contrib: 0.75
+# Stereo vision stuff
+# > REQUIRED
+matcher:
+    alg: 0
+    disp12MaxDiff: 10
+    speckleRange: 7
+    speckleWindowSize: 60
+    preFilterCap: 63
+    mode: 2
+    uniquenessRatio: 0
+    main_cam: 1

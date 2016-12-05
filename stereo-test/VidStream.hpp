@@ -52,7 +52,7 @@ public:
         filtGray = 2
     };
     VidStream(): valid(false), running(false) {}
-    void open(const YAML::Node &, int filters = filtResize);
+    void open(const YAML::Node &, int filt = filtResize);
     bool getFrame(ts_frame &);
     void stop() { running = false; this->t_vidstream.join(); }
     void start();

@@ -30,8 +30,8 @@ class VidStream {
 private:
     // Settings
     bool valid;
-    int id;
-    std::string name;
+    int id[];
+    std::string name[];
     double sf;
     rez_t rez;
     int filters;

@@ -1,5 +1,10 @@
 #include "VidStream.hpp"
 
+using Clock = std::chrono::steady_clock;
+using std::chrono::time_point;
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+
 #define GETK(key, type) (def[key] ? def[key] : defaults[key]).as<type>()
 
 void VidStream::open(const YAML::Node &def, int filters)
@@ -42,11 +47,17 @@ void VidStream::t_loop()
     using namespace std::chrono_literals;
     cv::Mat frame, avg;
     double contrib = Settings::get()["video"]["contrib"].as<double>();
+    double avg_time = 0;
     // Capture loop
     while(running)
     {
         // Capture frame
+        time_point<Clock> start = Clock::now();
         cap >> frame;
+        time_point<Clock> end = Clock::now();
+        milliseconds diff = duration_cast<milliseconds>(end - start);
+        avg_time = avg_time * 0.9 + diff.count() * 0.1;
+        //std::cout << (int) (avg_time + 0.5) << std::endl;
         if (first) avg = frame.clone();
         // Running exponential average
         cv::addWeighted(frame, contrib, avg, 1 - contrib, 0, avg);

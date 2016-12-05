@@ -2,7 +2,7 @@
 
 #define GETK(key, type) (def[key] ? def[key] : defaults[key]).as<type>()
 
-void VidStream::open(const YAML::Node &def, int filters)
+void VidStream::open(const YAML::Node &def, int filt)
 {
     YAML::Node defaults = Settings::get()["video"]["defaults"];
 
@@ -13,6 +13,8 @@ void VidStream::open(const YAML::Node &def, int filters)
     name = GETK("name", std::string);
     rez = GETK("res", rez_t);
     sf = GETK("scale", double);
+    filters = filt;
+
 
 
     if (GETK("on", int) == 0)
