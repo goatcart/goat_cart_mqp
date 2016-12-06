@@ -1,9 +1,7 @@
 #ifndef __VID_STREAM_H
 #define __VID_STREAM_H
 
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/videoio.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <string>
 #include <iostream>
@@ -15,34 +13,33 @@
 #include <thread>
 #include <mutex>
 
-#include <yaml-cpp/yaml.h>
-#include "settings.hpp"
-
 #define AVG_ON
 
-typedef std::array<int, 2> rez_t;
-
+using namespace cv;
 using clk_t =  std::chrono::steady_clock;
 using timestamp_t = std::chrono::time_point<clk_t>;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
+using namespace std::chrono_literals;
 
 template<std::size_t N>
-struct ts_frame {
+struct ts_frame_ {
     std::array<cv::Mat, N> frame;
     timestamp_t timestamp;
 };
 
 template<std::size_t N>
-using ts_frame = struct ts_frame<N>;
+using ts_frame = struct ts_frame_<N>;
 
 template<std::size_t N>
 class VidStream {
 private:
     // Settings
     bool valid;
+    double frame_weight;
+    int blur_radius;
     double scaling_factor;
-    rez_t base_rez;
+    Size base_rez;
     // Video Source
     std::array<cv::VideoCapture, N> cap;
     // Frame Buffer
@@ -53,8 +50,6 @@ private:
     bool first;
     void capture_loop()
     {
-        using namespace std::chrono_literals;
-        double frame_weight = Settings::get()["video"]["contrib"].as<double>();
         double avg_weight = 1 - frame_weight;
         ts_frame<N> tmp;
 #ifdef AVG_ON
@@ -66,7 +61,7 @@ private:
             timestamp_t start = clk_t::now();
             // Capture frame --> transition to doing this in parallel (asynch)
             bool success = true;
-            int i;
+            unsigned int i;
             for (i = 0; i < N; i++)
                 success &= cap[i].grab();
             if (!success)
@@ -95,10 +90,11 @@ private:
 #else
                 cvtColor(tmp.frame[i], frame.frame[i], cv::COLOR_BGR2GRAY);
 #endif
-                timestamp_t end = clk_t::now();
-                milliseconds diff = duration_cast<milliseconds>(end - start);
-    	        avg_time_ = avg_time_ * 0.99 + diff.count() * 0.01;
             }
+
+            timestamp_t end = clk_t::now();
+            milliseconds diff = duration_cast<milliseconds>(end - start);
+	        avg_time_ = avg_time_ * 0.99 + diff.count() * 0.01;
             std::this_thread::sleep_for(10ms);
             if (first) first = false;
         }
@@ -106,30 +102,34 @@ private:
     double avg_time_;
     std::thread t_vidstream;
 public:
-    VidStream(int* src_ids)
+    VidStream()
     {
-        YAML::Node video_settings = Settings::get()["video"];
+    	FileStorage fs("params.yml", FileStorage::READ);
+    	FileNode video_settings = fs["video"];
 
         // Init variables
         valid = false;
         first = true;
         running = false;
-        base_rez = video_settings["src-rez"].as<rez_t>();
-        scaling_factor = video_settings["scale"].as<double>();
+        video_settings["src-rez"] >> base_rez;
+        scaling_factor = (double) video_settings["scale"];
+        blur_radius = (int) video_settings["blur"];
+        avg_time_ = 0;
+        frame_weight = (double) video_settings["contrib"];
 
         // Init VideoCapture
-        for(int i = 0; i < N; i++)
+        for(unsigned int i = 0; i < N; i++)
         {
-            std::cout << "Opening Camera {{ " << video_settings["source"][i].as<std::string>() << " }} " << src_ids[i] << " ... ";
-            cap[i].open(src_ids[i]);
-            frame.frame[i].create(base_rez[1], base_rez[0], CV_8UC3);
+            std::cout << "Opening Camera {{ " << (std::string) video_settings["name"][i] << " }} ... ";
+            cap[i].open((int) video_settings["src"][i]);
+            frame.frame[i].create(base_rez, CV_8UC3);
             if (!cap[i].isOpened())
             {
                 std::cout << "FAIL" << std::endl;
                 return;
             }
-            cap[i].set(cv::CAP_PROP_FRAME_WIDTH, base_rez[0]);
-            cap[i].set(cv::CAP_PROP_FRAME_HEIGHT, base_rez[1]);
+            cap[i].set(cv::CAP_PROP_FRAME_WIDTH, base_rez.width);
+            cap[i].set(cv::CAP_PROP_FRAME_HEIGHT, base_rez.height);
             std::cout << "OK" << std::endl;
         }
         valid = true;
@@ -142,14 +142,16 @@ public:
         }
         std::lock_guard<std::mutex> lock(frame_mutex);
         frame_out.timestamp = frame.timestamp;
-        int i;
-        if (scaling_factor < 1.0)
-            for(i = 0; i < N; i++)
-                resize(frame.frame[i], frame_out.frame[i],
+        unsigned int i;
+        bool scaled = scaling_factor < 1.0;
+        for(i = 0; i < N; i++)
+        {
+            cv::GaussianBlur( frame.frame[i], frame.frame[i],
+                    cv::Size( blur_radius, blur_radius ), 0, 0 );
+            if (scaled)
+                resize( frame.frame[i], frame_out.frame[i],
                     cv::Size(), scaling_factor, scaling_factor, cv::INTER_AREA);
-        else
-            for(i = 0; i < N; i++)
-                frame.frame[i].copyTo(frame_out.frame[i]);
+        }
         return true;
     }
     void stop() { running = false; this->t_vidstream.join(); }

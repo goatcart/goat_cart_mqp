@@ -2,13 +2,13 @@
 ---
 # Camera definition stuff
 video:
-    left: 0
-    right: 1
-    source: [Left, Right]
+    src: [0, 1]
+    name: [Left, Right]
     fps: 30
     src-rez: [1280, 720]
     scale: 0.65
     contrib: 0.75
+    blur: 7
 # Stereo vision stuff
 # > REQUIRED
 matcher:

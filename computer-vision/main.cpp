@@ -5,16 +5,10 @@
 #include <map>
 
 /** OpenCV **/
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv2/ximgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/calib3d.hpp>
 
 /** Other **/
-#include <yaml-cpp/yaml.h>
-#include "defaults.h"
-#include "settings.hpp"
 #include "VidStream.hpp"
 
 using namespace cv;
@@ -40,50 +34,33 @@ struct AppParams {
 
 void loadSettings(struct AppParams &s)
 {
-    YAML::Node p = Settings::get();
-    YAML::Node m = p["matcher"];
-    YAML::Node node;
+	FileStorage fs("params.yml", FileStorage::READ);
+	FileNode m = fs["matcher"];
 
-    node = m["scaleFactor"];
-    s.scaleFactor = node.IsScalar() ? node.as<float>() : DEFAULT_SCALE_FACTOR;
-
-    node = m["alg"];
-    s.alg = node.IsScalar() ? node.as<int>() : DEFAULT_ALG;
+    s.scaleFactor = (float) m["scaleFactor"];
+    s.alg = (int) m["alg"];
 
     if (s.alg == 1) s.blockSize = 3;
     else if (s.scaleFactor < 0.99) s.blockSize = 7;
     else s.blockSize = 15;
 
-    int main_cam = m["main_cam"].as<int>();
-    int default_width = p["video"]["src-rez"][0].as<int>();
+    int default_width = (int) fs["video"]["src-rez"][0];
     s.numDisparities = CALC_DISP(default_width, s.scaleFactor);
-
-    node = m["disp12MaxDiff"];
-    s.disp12MaxDiff = node.IsScalar() ? node.as<int>() : DEFAULT_D12_MAX_DIFF;
-
-    node = m["speckleRange"];
-    s.speckleRange = node.IsScalar() ? node.as<int>() : DEFAULT_SPECKLE_RANGE;
-
-    node = m["speckleWindowSize"];
-    s.speckleWindowSize = node.IsScalar() ? node.as<int>() : DEFAULT_SPECKE_WS;
-
-    node = m["preFilterCap"];
-    s.preFilterCap = node.IsScalar() ? node.as<int>() : DEFAULT_PF_CAP;
-
-    node = m["uniquenessRatio"];
-    s.uniquenessRatio = node.IsScalar() ? node.as<int>() : DEFAULT_UNIQ_RATIO;
+    s.disp12MaxDiff = (int) m["disp12MaxDiff"];
+    s.speckleRange = (int) m["speckleRange"];
+    s.speckleWindowSize = (int) m["speckleWindowSize"];
+    s.preFilterCap = (int) m["preFilterCap"];
+    s.uniquenessRatio = (int) m["uniquenessRatio"];
 }
 
-#define GETK(key, type) (t1[key] ? t1[key] : t2[key]).as<type>();
-
-Ptr<StereoMatcher> initMatcher(struct AppParams *pSettings)
+Ptr<StereoMatcher> initMatcher(struct AppParams &pSettings)
 {
-    Ptr<StereoBM> matcher = StereoBM::create(pSettings->numDisparities, pSettings->blockSize);
-    //matcher->setDisp12MaxDiff(pSettings->disp12MaxDiff);
-    //matcher->setSpeckleRange(pSettings->speckleRange);
-    //matcher->setSpeckleWindowSize(pSettings->speckleWindowSize);
-    matcher->setPreFilterCap(pSettings->preFilterCap);
-    matcher->setUniquenessRatio(pSettings->uniquenessRatio);
+    Ptr<StereoBM> matcher = StereoBM::create(pSettings.numDisparities, pSettings.blockSize);
+    //matcher->setDisp12MaxDiff(pSettings.disp12MaxDiff);
+    //matcher->setSpeckleRange(pSettings.speckleRange);
+    //matcher->setSpeckleWindowSize(pSettings.speckleWindowSize);
+    matcher->setPreFilterCap(pSettings.preFilterCap);
+    matcher->setUniquenessRatio(pSettings.uniquenessRatio);
     return matcher;
 }
 
@@ -91,21 +68,16 @@ Ptr<StereoMatcher> initMatcher(struct AppParams *pSettings)
 
 int main (int argc, char** argv )
 {
-    using namespace std::chrono_literals;
-    //-
-    std::cout << std::endl << "Loading params" << std::endl;
-    YAML::Node cams_i = Settings::get()["video"];
     struct AppParams pSettings;
 
     loadSettings(pSettings);
 
     // Open up cameras
     std::cout << std::endl << "Opening VideoCapture streams" << std::endl;
-    int ids[] = { cams_i["left"].as<int>(), cams_i["right"].as<int>() };
-    VidStream<2> cam(ids);
+    VidStream<2> cam;
 
     std::cout << std::endl << "Creating StereoMatcher" << std::endl;
-    Ptr<StereoMatcher> matcher_l = initMatcher(&pSettings);
+    Ptr<StereoMatcher> matcher_l = initMatcher(pSettings);
     Ptr<ximgproc::DisparityWLSFilter> wls_filter = ximgproc::createDisparityWLSFilter(matcher_l);
     Ptr<StereoMatcher> matcher_r = ximgproc::createRightMatcher(matcher_l);
     wls_filter->setLambda(8000);
@@ -133,9 +105,11 @@ int main (int argc, char** argv )
             // Calc + disp filter time
             milliseconds diff = duration_cast<milliseconds>(end - start);
 	        avg_time = avg_time * 0.75 + diff.count() * 0.25;
-            tm_cap = std::to_string((int) (cam.avg_time() + 0.5));
+            tm_cap = std::to_string((int) (avg_time + 0.5));
             putText(DV, tm_cap, Point(10, 100), FONT_HERSHEY_PLAIN, 2.0, 	Scalar(255.0, 255.0, 255.0), 2);
             imshow("Disparity Map", DV);
+            imshow("Left", frames.frame[0]);
+            imshow("Right", frames.frame[1]);
         }
         if ((char) waitKey(50) == 'q') break;
     }
