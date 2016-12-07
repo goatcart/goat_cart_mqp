@@ -13,23 +13,12 @@
 #include <thread>
 #include <mutex>
 
-#define AVG_ON
+#include "settings.hpp"
+#include "types.hpp"
 
-using namespace cv;
-using clk_t =  std::chrono::steady_clock;
-using timestamp_t = std::chrono::time_point<clk_t>;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using namespace std::chrono_literals;
-
-template<std::size_t N>
-struct ts_frame_ {
-    std::array<cv::Mat, N> frame;
-    timestamp_t timestamp;
-};
-
-template<std::size_t N>
-using ts_frame = struct ts_frame_<N>;
 
 template<std::size_t N>
 class VidStream {
@@ -39,9 +28,9 @@ private:
     double frame_weight;
     int blur_radius;
     double scaling_factor;
-    Size base_rez;
+    cv::Size base_rez;
     // Video Source
-    std::array<cv::VideoCapture, N> cap;
+    cv::VideoCapture cap[N];
     // Frame Buffer
     ts_frame<N> frame;
     std::mutex frame_mutex;
@@ -50,9 +39,9 @@ private:
     bool first;
     void capture_loop()
     {
-        double avg_weight = 1 - frame_weight;
         ts_frame<N> tmp;
 #ifdef AVG_ON
+        double avg_weight = 1 - frame_weight;
         ts_frame<N> avg;
 #endif
         // Capture loop
@@ -94,7 +83,7 @@ private:
 
             timestamp_t end = clk_t::now();
             milliseconds diff = duration_cast<milliseconds>(end - start);
-	        avg_time_ = avg_time_ * 0.99 + diff.count() * 0.01;
+            avg_time_ = avg_time_ * AVG_OLD + diff.count() * AVG_NEW;
             std::this_thread::sleep_for(10ms);
             if (first) first = false;
         }
@@ -104,8 +93,8 @@ private:
 public:
     VidStream()
     {
-    	FileStorage fs("params.yml", FileStorage::READ);
-    	FileNode video_settings = fs["video"];
+    	cv::FileStorage fs("params.yml", cv::FileStorage::READ);
+    	cv::FileNode video_settings = fs["video"];
 
         // Init variables
         valid = false;
@@ -143,14 +132,15 @@ public:
         std::lock_guard<std::mutex> lock(frame_mutex);
         frame_out.timestamp = frame.timestamp;
         unsigned int i;
-        bool scaled = scaling_factor < 1.0;
+        cv::Mat tmp;
         for(i = 0; i < N; i++)
         {
+#ifdef BLUR_ON
             cv::GaussianBlur( frame.frame[i], frame.frame[i],
                     cv::Size( blur_radius, blur_radius ), 0, 0 );
-            if (scaled)
-                resize( frame.frame[i], frame_out.frame[i],
-                    cv::Size(), scaling_factor, scaling_factor, cv::INTER_AREA);
+#endif
+			resize( frame.frame[i], frame_out.frame[i],
+				cv::Size(), scaling_factor, scaling_factor, cv::INTER_AREA);
         }
         return true;
     }

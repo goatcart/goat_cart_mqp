@@ -6,13 +6,12 @@ video:
     name: [Left, Right]
     fps: 30
     src-rez: [1280, 720]
-    scale: 0.65
+    scale: 0.5
     contrib: 0.75
     blur: 7
 # Stereo vision stuff
 # > REQUIRED
 matcher:
-    alg: 0
     disp12MaxDiff: 10
     speckleRange: 7
     speckleWindowSize: 60
