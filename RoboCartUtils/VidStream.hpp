@@ -161,6 +161,7 @@ public:
         t_vidstream = std::thread([=] { capture_loop(); });
     }
     const double avg_time() { return avg_time_; }
+    const bool is_valid() { return valid; }
 };
 
 #endif
