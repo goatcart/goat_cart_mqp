@@ -6,35 +6,6 @@ video:
     name: [Left, Right]
     fps: 30
     src-rez: [1280, 720]
-    scale: 0.5
+    scale: 0.65
     contrib: 0.75
     blur: 7
-# Stereo vision stuff
-# > REQUIRED
-matcher:
-    disp12MaxDiff: 10
-    speckleRange: 7
-    speckleWindowSize: 60
-    preFilterCap: 63
-    mode: 2
-    uniquenessRatio: 0
-    main_cam: 1
-
-#Occupancy Grid parameters (in cm):
-og:
-	cameraHeight: 70.485 #50.165 #camera height (in cm)
-	robotWidth: 60.96 #robot width (in cm)
-	robotLength: 78.74 #robot length (in cm)
-	clearance: 5.24 #clearance from obstacles (in cm)
-	occupancySize: [200, 200] #[width, height]
-	xRange: [-100, 100]
-	yRange: [0, 250]
-	zRange: [0, 500]
-	r: 7 #7 #r param for the sigmoid adjustment
-	c: 0.2 #0.02 #c param for the sigmoid adjustment
-	deltaN: 55 #deltaN param for the probability computation
-	nt: -3.6 #unknown occupancy threshold (probability < nt -> occupancy is unknown)
-	lt: -3 #occupied threshold (probability >= lt -> cell is occupied)
-	deltaH: 20 #deltaH param for the probability computation
-	wN: 0.5 #weight for the probability based on number of points in cell
-	wH: 0.5 #weight for the probability based on obstacle height

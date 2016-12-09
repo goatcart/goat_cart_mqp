@@ -43,19 +43,21 @@ int main (int argc, char** argv )
     cam.start();
     std::string tm_disp;
     std::string tm_cap;
-    cv::Mat disp_vis, disp_og, image3d;
+    cv::Mat disp_vis, disp_og_in, disp_og, image3d;
     for (;;)
     {
         bool ready = cam.getFrame(frames);
         if (ready)
         {
         	depthMapper.compute(frames, disp_vis);
-        	ogCalculator.compute(disp_vis, disp_og, image3d);
+        	normalize(disp_vis, disp_og_in, 0, 255, CV_MINMAX, CV_8UC1);
+        	ogCalculator.compute(disp_og_in, disp_og, image3d);
         	tm_disp = std::to_string((int) (depthMapper.avg_time() + 0.5));
             tm_cap = std::to_string((int) (cam.avg_time() + 0.5));
             cv::putText(disp_vis, tm_disp, cv::Point(10, 100), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(255.0, 255.0, 255.0), 2);
             cv::putText(disp_vis, tm_cap, cv::Point(10, 200), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(255.0, 255.0, 255.0), 2);
-            cv::imshow("Disparity Map", disp_vis);
+            cv::imshow("Disparity Map", disp_og_in);
+            cv::imshow("OG", disp_og);
             imshow("Left", frames.frame[0]);
             imshow("Right", frames.frame[1]);
         }

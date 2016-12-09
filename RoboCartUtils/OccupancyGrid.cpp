@@ -9,6 +9,7 @@ OccupancyGrid::OccupancyGrid(cv::Mat q, cv::Size occupancySize,
 
 OccupancyGrid::OccupancyGrid() {
 	cv::FileStorage fs("params.yml", cv::FileStorage::READ);
+	cv::FileStorage ext("extrinsics.yml", cv::FileStorage::READ);
 	cv::FileNode og = fs["og"];
 
 	og["occupancySize"] >> occupancySize;
@@ -19,6 +20,7 @@ OccupancyGrid::OccupancyGrid() {
 	og["xRange"] >> xRange;
 	og["yRange"] >> yRange;
 	og["zRange"] >> zRange;
+	ext["Q"] >> q;
 	r = (double) og["r"];
 	c = (double) og["c"];
 	deltaN = (double) og["deltaN"];
@@ -107,8 +109,6 @@ void OccupancyGrid::compute(cv::Mat &disparity, cv::Mat &dispOccupancy, cv::Mat 
 
 	cv::Mat dilationKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2*dilationN + 1, 1));
 	cv::dilate(dispOccupancy, dispOccupancy, dilationKernel);
-
-	count++;
 }
 
 OccupancyGrid::~OccupancyGrid() {

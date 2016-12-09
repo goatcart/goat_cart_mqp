@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <map>
+#include <stdlib.h>
 
 /** OpenCV **/
 #include <opencv2/opencv.hpp>
@@ -30,12 +31,6 @@ int main (int argc, char** argv )
     	return 0;
     }
 
-    std::cout << std::endl << "Creating StereoMatcher" << std::endl;
-    StereoVision depthMapper;
-
-    std::cout << std::endl << "Creating OccupancyGrid" << std::endl;
-    OccupancyGrid ogCalculator;
-
     std::cout << std::endl << "Entering main loop" << std::endl;
 
     ts_frame<2> frames;
@@ -44,22 +39,30 @@ int main (int argc, char** argv )
     std::string tm_disp;
     std::string tm_cap;
     cv::Mat disp_vis, disp_og, image3d;
+    char name_l[16];
+    char name_r[17];
+    const char* fmt_l = "data/left%.2i.jpg";
+    const char* fmt_r = "data/right%.2i.jpg";
+    int i = 1;
     for (;;)
     {
         bool ready = cam.getFrame(frames);
         if (ready)
         {
-        	depthMapper.compute(frames, disp_vis);
-        	ogCalculator.compute(disp_vis, disp_og, image3d);
-        	tm_disp = std::to_string((int) (depthMapper.avg_time() + 0.5));
-            tm_cap = std::to_string((int) (cam.avg_time() + 0.5));
-            cv::putText(disp_vis, tm_disp, cv::Point(10, 100), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(255.0, 255.0, 255.0), 2);
-            cv::putText(disp_vis, tm_cap, cv::Point(10, 200), cv::FONT_HERSHEY_PLAIN, 2.0, cv::Scalar(255.0, 255.0, 255.0), 2);
-            cv::imshow("Disparity Map", disp_vis);
-            imshow("Left", frames.frame[0]);
+        	imshow("Left", frames.frame[0]);
             imshow("Right", frames.frame[1]);
         }
-        if ((char) cv::waitKey(10) == 'q') break;
+        char k = (char) cv::waitKey(10);
+        if (k == 'q') break;
+        else if (k == 's' && ready)
+        {
+        	sprintf(name_l, fmt_l, i);
+        	sprintf(name_r, fmt_r, i);
+        	imwrite(name_l, frames.frame[0]);
+        	imwrite(name_r, frames.frame[1]);
+        	std::cout << "Saved image pair no. " << i << std::endl;
+        	i++;
+        }
     }
     cam.stop();
 

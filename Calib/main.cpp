@@ -115,7 +115,6 @@ StereoCalib(const vector<string>& imagelist, Size boardSize, float squareSize, b
             }
             if( displayCorners )
             {
-                cout << filename << endl;
                 Mat cimg, cimg1;
                 cvtColor(img, cimg, COLOR_GRAY2BGR);
                 drawChessboardCorners(cimg, boardSize, corners, found);
@@ -128,6 +127,7 @@ StereoCalib(const vector<string>& imagelist, Size boardSize, float squareSize, b
             }
             else
                 putchar('.');
+            cout << "[ " << i << " ]: " << found << endl;
             if( !found )
                 break;
             cornerSubPix(img, corners, Size(11,11), Size(-1,-1),
@@ -233,6 +233,7 @@ StereoCalib(const vector<string>& imagelist, Size boardSize, float squareSize, b
     if( fs.isOpened() )
     {
         fs << "R" << R << "T" << T << "R1" << R1 << "R2" << R2 << "P1" << P1 << "P2" << P2 << "Q" << Q;
+        fs << "roi1" << validRoi[0] << "roi2" << validRoi[2];
         fs.release();
     }
     else
@@ -347,7 +348,7 @@ int main(int argc, char** argv)
     Size boardSize;
     string imagelistfn;
     bool showRectified;
-    cv::CommandLineParser parser(argc, argv, "{w|9|}{h|6|}{s|1.0|}{nr||}{help||}{@input|data/stereo_calib.xml|}");
+    cv::CommandLineParser parser(argc, argv, "{w|7|}{h|7|}{s|2.54|}{nr||}{help||}{@input|stereo_calib.xml|}");
     if (parser.has("help"))
         return print_help();
     showRectified = !parser.has("nr");
@@ -368,6 +369,6 @@ int main(int argc, char** argv)
         return print_help();
     }
 
-    StereoCalib(imagelist, boardSize, squareSize, false, true, showRectified);
+    StereoCalib(imagelist, boardSize, squareSize, true, true, showRectified);
     return 0;
 }
