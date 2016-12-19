@@ -2,10 +2,10 @@
 ---
 # Camera definition stuff
 video:
-    src: [0, 1]
+    src: [1, 2]
     name: [Left, Right]
     fps: 30
     src-rez: [1280, 720]
     scale: 0.65
     contrib: 0.75
-    blur: 7
+    blur: 5

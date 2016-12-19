@@ -8,6 +8,8 @@
 #include "StereoVision.hpp"
 #include "settings.hpp"
 
+#define CALL_MEMBER_FN(object,ptrToMember)  ((object)->*(ptrToMember))
+
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
@@ -26,41 +28,64 @@ void StereoVision::loadSettings(void)
 	cv::FileStorage fs("params.yml", cv::FileStorage::READ);
 	cv::FileNode m = fs["matcher"];
 
+	if ((int) m["mode"] == 1) mode = matcher_t::stereosgbm;
+	else mode = matcher_t::stereobm;
+
 	double scaleFactor = (double) m["scaleFactor"];
 
-	if (scaleFactor < 0.99) blockSize = 7;
+	if (mode == matcher_t::stereosgbm) blockSize = 3;
+	else if (scaleFactor < 0.99) blockSize = 7;
 	else blockSize = 15;
 
 	int default_width = (int) fs["video"]["src-rez"][0];
 	numDisparities = CALC_DISP(default_width, scaleFactor);
-	disp12MaxDiff = (int) m["disp12MaxDiff"];
-	speckleRange = (int) m["speckleRange"];
-	speckleWindowSize = (int) m["speckleWindowSize"];
 	preFilterCap = (int) m["preFilterCap"];
-	uniquenessRatio = (int) m["uniquenessRatio"];
 }
 
 void StereoVision::initMatchers(void) {
-	left = cv::StereoBM::create(numDisparities, blockSize);
-	//left->setDisp12MaxDiff(disp12MaxDiff);
-	//left->setSpeckleRange(speckleRange);
-	//left->setSpeckleWindowSize(speckleWindowSize);
-	left->setPreFilterCap(preFilterCap);
-	left->setUniquenessRatio(uniquenessRatio);
-    filter = cv::ximgproc::createDisparityWLSFilter(left);
+	if(mode == matcher_t::stereobm) {
+		cv::Ptr<cv::StereoBM> matcher = cv::StereoBM::create(numDisparities, blockSize);
+		matcher->setPreFilterCap(preFilterCap);
+		left = matcher;
+		compute_disp = &StereoVision::compute_bm;
+	}
+	else {
+		cv::Ptr<cv::StereoSGBM> matcher = cv::StereoSGBM::create(0, numDisparities, blockSize);
+		matcher->setPreFilterCap(preFilterCap);
+		matcher->setP1(P_base(3, blockSize));
+		matcher->setP2(4 * P_base(3, blockSize));
+//		matcher->setMode(cv::StereoSGBM::MODE_SGBM_3WAY);
+		left = matcher;
+		compute_disp = &StereoVision::compute_sgbm;
+	}
+	filter = cv::ximgproc::createDisparityWLSFilter(left);
 	right = cv::ximgproc::createRightMatcher(left);
 	filter->setLambda(8000);
 	filter->setSigmaColor(1.0);
 }
 
+
+void StereoVision::compute_sgbm(cv::Mat frame_l, cv::Mat frame_r, cv::Mat &disp)
+{
+	left->compute(frame_l, frame_r, disp);
+}
+
+void StereoVision::compute_bm(cv::Mat frame_l, cv::Mat frame_r, cv::Mat &disp)
+{
+	cv::Mat disp_l, disp_r;
+	cv::cvtColor(frame_l, frame_l, cv::COLOR_BGR2GRAY);
+	cv::cvtColor(frame_r, frame_r, cv::COLOR_BGR2GRAY);
+	left->compute(frame_l, frame_r, disp_l);
+	right->compute(frame_r, frame_l, disp_r);
+	filter->filter(disp_l, frame_l, disp, disp_r);
+}
+
 void StereoVision::compute(ts_frame<2> &frames, cv::Mat &disp)
 {
     timestamp_t start = clk_t::now();
-	cv::Mat disp_l, disp_r, disp_f;
-	left->compute(frames.frame[0], frames.frame[1], disp_l);
-	right->compute(frames.frame[1], frames.frame[0], disp_r);
-	filter->filter(disp_l, frames.frame[0], disp_f, disp_r);
-	cv::ximgproc::getDisparityVis(disp_f, disp, 1.75);
+    (this->*compute_disp)(frames.frame[0], frames.frame[1], disp);
+    std::cout << CV_16S << " " << disp.depth() << " " << disp.channels() << std::endl;
+	cv::ximgproc::getDisparityVis(disp, disp, 1.75);
 	timestamp_t end = clk_t::now();
     milliseconds diff = duration_cast<milliseconds>(end - start);
     avg_time_ = avg_time_ * AVG_OLD + diff.count() * AVG_NEW;

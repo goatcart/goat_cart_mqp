@@ -29,6 +29,7 @@ OccupancyGrid::OccupancyGrid() {
 	deltaH = (double) og["deltaH"];
 	wN = (double) wN;
 	wH = (double) wH;
+	count = 0;
 }
 
 void OccupancyGrid::compute(cv::Mat &disparity, cv::Mat &dispOccupancy, cv::Mat &image3d) {

@@ -2,31 +2,27 @@
 ---
 # Camera definition stuff
 video:
-  src: [0, 1]
+  src: [1, 2]
   name: [Left, Right]
   fps: 30
   src-rez: [1280, 720]
   scale: 0.65
   contrib: 0.75
-  blur: 3
+  blur: 5
 
 # Stereo vision stuff
 # > REQUIRED
 matcher:
-  disp12MaxDiff: 10
-  speckleRange: 7
-  speckleWindowSize: 60
   preFilterCap: 63
-  mode: 2
-  uniquenessRatio: 0
+  mode: 1
   main_cam: 1
 
 #Occupancy Grid parameters (in cm):
 og:
-  cameraHeight: 10.485 #50.165 #camera height (in cm)
-  robotWidth: 23.66 #robot width (in cm)
-  robotLength: 23.66 #robot length (in cm)
-  clearance: 5.24 #clearance from obstacles (in cm)
+  cameraHeight: 51.7525 #50.165 #camera height (in cm)
+  robotWidth: 10.66 #robot width (in cm)
+  robotLength: 10.66 #robot length (in cm)
+  clearance: 2.25 #clearance from obstacles (in cm)
   occupancySize: [200, 200] #[width, height]
   xRange: [-100, 100]
   yRange: [0, 250]
