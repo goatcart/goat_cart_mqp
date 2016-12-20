@@ -7,8 +7,8 @@ class OccupancyGrid {
 private:
 	cv::Mat q;
 	cv::Size occupancySize;
-	double cameraHeight, robotWidth, robotLength, clearance,
-		r, c, deltaN, nt, lt, deltaH, wN, wH;
+	double cameraHeight, robotWidth, robotLength, clearance, r, c, deltaN, nt,
+			lt, deltaH, wN, wH;
 	int count;
 
 public:

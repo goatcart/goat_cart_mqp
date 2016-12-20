@@ -8,7 +8,7 @@ video:
   src-rez: [1280, 720]
   scale: 0.65
   contrib: 0.75
-  blur: 5
+  blur: 3
 
 # Stereo vision stuff
 # > REQUIRED

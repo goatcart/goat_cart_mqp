@@ -23,27 +23,26 @@ using namespace std::chrono_literals;
 template<std::size_t N>
 class VidStream {
 protected:
-    // Settings
-    bool valid;
-    double frame_weight;
-    int blur_radius;
-    double scaling_factor;
-    bool gray;
-    cv::Size base_rez;
-    // Video Source
-    cv::VideoCapture cap[N];
-    // Frame Buffer
-    ts_frame<N> frame;
-    std::mutex frame_mutex;
-    // Thread Loop
-    bool running;
-    bool first;
-    void capture_loop();
-    double avg_time_;
-    std::thread t_vidstream;
+	// Settings
+	bool valid;
+	double frame_weight;
+	int blur_radius;
+	double scaling_factor;
+	bool gray;
+	cv::Size base_rez;
+	// Video Source
+	cv::VideoCapture cap[N];
+	// Frame Buffer
+	ts_frame<N> frame;
+	std::mutex frame_mutex;
+	// Thread Loop
+	bool running;
+	bool first;
+	void capture_loop();
+	double avg_time_;
+	std::thread t_vidstream;
 public:
-    VidStream()
-	{
+	VidStream() {
 		cv::FileStorage fs("params.yml", cv::FileStorage::READ);
 		cv::FileNode video_settings = fs["video"];
 
@@ -59,13 +58,12 @@ public:
 		gray = (1 == (int) video_settings["gray"]);
 
 		// Init VideoCapture
-		for(unsigned int i = 0; i < N; i++)
-		{
-			std::cout << "Opening Camera {{ " << (std::string) video_settings["name"][i] << " }} ... ";
+		for (unsigned int i = 0; i < N; i++) {
+			std::cout << "Opening Camera {{ "
+					<< (std::string) video_settings["name"][i] << " }} ... ";
 			cap[i].open((int) video_settings["src"][i]);
 			frame.frame[i].create(base_rez, CV_8UC3);
-			if (!cap[i].isOpened())
-			{
+			if (!cap[i].isOpened()) {
 				std::cout << "FAIL" << std::endl;
 				return;
 			}
@@ -75,25 +73,29 @@ public:
 		}
 		valid = true;
 	}
-    bool getFrame(ts_frame<N> &frame_out);
-    void stop() { running = false; this->t_vidstream.join(); }
-    void start()
-    {
-        if (!valid)
-        {
-            std::cout << "One of the sources is invalid." << std::endl;
-            return;
-        }
-        if (running)
-        {
-            std::cout << "An instance is already running." << std::endl;
-            return;
-        }
-        running = true;
-        t_vidstream = std::thread([=] { capture_loop(); });
-    }
-    const double avg_time() { return avg_time_; }
-    const bool is_valid() { return valid; }
+	bool getFrame(ts_frame<N> &frame_out);
+	void stop() {
+		running = false;
+		this->t_vidstream.join();
+	}
+	void start() {
+		if (!valid) {
+			std::cout << "One of the sources is invalid." << std::endl;
+			return;
+		}
+		if (running) {
+			std::cout << "An instance is already running." << std::endl;
+			return;
+		}
+		running = true;
+		t_vidstream = std::thread([=] {capture_loop();});
+	}
+	const double avg_time() {
+		return avg_time_;
+	}
+	const bool is_valid() {
+		return valid;
+	}
 };
 
 #endif
