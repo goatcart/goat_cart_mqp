@@ -14,15 +14,11 @@
 #include "types.hpp"
 
 #define P_base(imChannels, blockSize) (8 * imChannels * blockSize * blockSize)
-#define CALC_DISP(width, scale) (((int) (width * scale / 8) + 15) & -16)
+#define CALC_DISP(width, scale) (((int) (width * scale / 8 + 0.5) + 15) & -16)
 
 class StereoVision;
 
 typedef void (StereoVision::*compute_func_t)(cv::Mat, cv::Mat, cv::Mat &);
-
-typedef enum {
-	stereobm, stereosgbm
-} matcher_t;
 
 class StereoVision {
 private:
@@ -30,6 +26,10 @@ private:
 	int blockSize;
 	int numDisparities;
 	int preFilterCap;
+	int uniquenessRatio;
+	int disp12MaxDiff;
+	int speckleRange;
+	int speckleWindowSize;
 
 	// Disparity computer
 	cv::Ptr<cv::StereoMatcher> left;

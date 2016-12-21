@@ -43,6 +43,9 @@ int main(int argc, char** argv) {
 	std::string tm_disp;
 	std::string tm_cap;
 	Mat disp_vis, disp_og, image3d;
+
+	std::string l_name = "left.png", r_name = "right.png";
+
 	for (;;) {
 		bool ready = cam.getFrame(frames);
 		if (ready) {
@@ -56,11 +59,15 @@ int main(int argc, char** argv) {
 					cv::Scalar(255.0, 255.0, 255.0), 2);
 			imshow("Disparity Map", disp_vis);
 			imshow("OG", disp_og);
-//			imshow("Left", frames.frame[0]);
-//			imshow("Right", frames.frame[1]);
 		}
-		if ((char) waitKey(10) == 'q')
+		char k = (char) waitKey(10);
+		if (k == 'q')
 			break;
+		else if (k == 's')
+		{
+			imwrite("left.png", frames.frame[0]);
+			imwrite("right.png", frames.frame[1]);
+		}
 	}
 	cam.stop();
 

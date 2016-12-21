@@ -23,4 +23,9 @@ struct ts_frame_ {
 template<std::size_t N>
 using ts_frame = struct ts_frame_<N>;
 
+
+typedef enum matcher_t {
+	stereobm, stereosgbm
+} matcher_t;
+
 #endif /* TYPES_HPP_ */

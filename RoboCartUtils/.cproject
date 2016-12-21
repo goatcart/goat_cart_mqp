@@ -45,12 +45,9 @@
 								<option defaultValue="true" id="gnu.c.link.option.shared.1405741954" name="Shared (-shared)" superClass="gnu.c.link.option.shared" valueType="boolean"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1750476084" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
-								<option id="gnu.cpp.link.option.paths.1075221599" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/usr/local/lib"/>
-								</option>
+								<option id="gnu.cpp.link.option.paths.1075221599" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false"/>
 								<option id="gnu.cpp.link.option.libs.1459140507" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="opencv_core"/>
-									<listOptionValue builtIn="false" value="yaml-cpp"/>
 									<listOptionValue builtIn="false" value="opencv_videoio"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 									<listOptionValue builtIn="false" value="opencv_ximgproc"/>

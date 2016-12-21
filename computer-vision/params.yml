@@ -6,20 +6,24 @@ video:
   name: [Left, Right]
   fps: 30
   src-rez: [1280, 720]
-  scale: 0.65
+  scale: 0.45 #0.65
   contrib: 0.75
-  blur: 3
+  blur: 7
 
 # Stereo vision stuff
 # > REQUIRED
 matcher:
   preFilterCap: 63
+  uniquenessRatio: 15
+  disp12MaxDiff: 2048
+  speckleRange: 7
+  speckleWindowSize: 255
   mode: 1
   main_cam: 1
 
 #Occupancy Grid parameters (in cm):
 og:
-  cameraHeight: 51.7525 #50.165 #camera height (in cm)
+  cameraHeight: 100 #51.7525 #50.165 #camera height (in cm)
   robotWidth: 10.66 #robot width (in cm)
   robotLength: 10.66 #robot length (in cm)
   clearance: 2.25 #clearance from obstacles (in cm)
