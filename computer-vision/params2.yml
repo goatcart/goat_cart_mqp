@@ -1,0 +1,27 @@
+matcher: {disp12MaxDiff: 2048, main_cam: 1, mode: 1, preFilterCap: 63, speckleRange: 7,
+  speckleWindowSize: 255, uniquenessRatio: 15}
+og:
+  c: 0.2
+  cameraHeight: 100
+  clearance: 2.25
+  deltaH: 20
+  deltaN: 55
+  lt: -3
+  nt: -3.6
+  occupancySize: [200, 200]
+  r: 7
+  robotLength: 10.66
+  robotWidth: 10.66
+  wH: 0.5
+  wN: 0.5
+  xRange: [-100, 100]
+  yRange: [0, 250]
+  zRange: [0, 500]
+video:
+  blur: 7
+  contrib: 0.75
+  fps: 30
+  name: [Left, Right]
+  scale: 0.45
+  src: [1, 2]
+  src-rez: [1280, 720]

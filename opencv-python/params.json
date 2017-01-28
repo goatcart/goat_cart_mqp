@@ -1,0 +1,28 @@
+{
+  "video": {
+    "src": [
+      {
+        "type": "dummy",
+        "path": "../data/test_images/left.png"
+      },
+      {
+        "type": "dummy",
+        "path": "../data/test_images/right.png"
+      }
+    ],
+    "fps": 30,
+    "src-rez": [1280, 720],
+    "scale": 0.45,
+    "contrib": 0.75,
+    "blur": 7
+  },
+  "matcher": {
+    "preFilterCap": 63,
+    "uniquenessRatio": 15,
+    "disp12MaxDiff": 2048,
+    "speckleRange": 7,
+    "speckleWindowSize": 255,
+    "mode": 0,
+    "main_cam": 1
+  }
+}
