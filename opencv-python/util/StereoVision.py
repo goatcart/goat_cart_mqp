@@ -18,20 +18,24 @@ class MatcherType(Enum):
     stereo_sgbm = 1
 
 class StereoVision:
-    def __init__(self):
+    def __init__(self, src):
+        self.__src = src
         self.__load_settings()
         self.__init_matcher()
 
     def __load_settings(self):
+
         fs = json.load(open('params.json', 'r'))
         i_matcher = fs['matcher']
+
+        self.src_id = i_matcher['src']
 
         if i_matcher['mode'] == 1:
             self.mode = MatcherType.stereo_sgbm
         else:
             self.mode = MatcherType.stereo_bm
 
-        self.scale_factor = fs['video']['scale']
+        self.scale_factor = self.__src.get(self.src_id).scale()
 
         if self.mode == MatcherType.stereo_sgbm:
             self.block_size = 5
@@ -40,7 +44,7 @@ class StereoVision:
         else:
             self.block_size = 15
 
-        default_width = fs['video']['src-rez'][0]
+        default_width = self.__src.get(self.src_id).size()[0]
         self.num_disp            = calc_disp(default_width, self.scale_factor)
         self.pre_filter_cap      = i_matcher['preFilterCap']
         self.uniqueness_ratio    = i_matcher['uniquenessRatio']
@@ -64,7 +68,6 @@ class StereoVision:
         self.__right = createRightMatcher(self.__left)
         self.__filter.setLambda(8000)
         self.__filter.setSigmaColor(1.0)
-        self.__factor = 0
 
 
     def compute(self, frames):
@@ -72,8 +75,6 @@ class StereoVision:
         frame_r = cv2.cvtColor(frames[1], cv2.COLOR_BGR2GRAY)
         disp_l = self.__left.compute(frame_l, frame_r)
         disp_r = self.__right.compute(frame_r, frame_l)
-        print (disp_l.dtype, disp_l.shape)
-        print (disp_r.dtype, disp_r.shape)
         disp = self.__filter.filter(
             disparity_map_left=disp_l,
             left_view=frame_l,

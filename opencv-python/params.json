@@ -1,21 +1,31 @@
 {
-  "video": {
-    "src": [
-      {
-        "type": "dummy",
-        "path": "../data/test_images/left.png"
-      },
-      {
-        "type": "dummy",
-        "path": "../data/test_images/right.png"
-      }
-    ],
-    "fps": 30,
-    "src-rez": [1280, 720],
-    "scale": 0.45,
-    "contrib": 0.75,
-    "blur": 7
-  },
+  "video": [
+    {
+      "id": "dummy-stereo-1",
+      "type": "image",
+      "path": "../data/test_images/",
+      "src": ["left01.jpg", "right01.jpg"],
+      "enabled": true
+    },
+    {
+      "id": "dummy-stereo-2",
+      "type": "image",
+      "path": "../data/test_images/",
+      "src": ["left.png", "right.png"],
+      "enabled": true
+    },
+    {
+      "id": "webcam-stereo",
+      "type": "vid",
+      "src": [0, 1],
+      "fps": 30,
+      "rez": [1280, 720],
+      "scale": 0.45,
+      "contrib": 0.75,
+      "blur": 7,
+      "enabled": false
+    }
+  ],
   "matcher": {
     "preFilterCap": 63,
     "uniquenessRatio": 15,
@@ -23,6 +33,7 @@
     "speckleRange": 7,
     "speckleWindowSize": 255,
     "mode": 0,
+    "src": "dummy-stereo-2",
     "main_cam": 1
   }
 }
