@@ -18,6 +18,8 @@ class MatcherType(Enum):
     stereo_sgbm = 1
 
 class StereoVision:
+    factor = 0
+
     def __init__(self, src):
         self.__src = src
         self.__load_settings()
@@ -79,7 +81,10 @@ class StereoVision:
             disparity_map_left=disp_l,
             left_view=frame_l,
             disparity_map_right=disp_r
-        )
+        ).clip(min=0)
+        min_v, max_v, _, _ = cv2.minMaxLoc(disp)
+        self.factor = 63 / (max_v - min_v) + self.factor * 0.75
+        disp = (disp * self.factor).astype('uint8')
         return disp, disp_l, disp_r
 
     def avg_time(self):

@@ -66,13 +66,13 @@ class OccupancyGrid:
 
                     avg_prob = self.w_n * lij_num + self.w_h * lij_height
 
-                    if avg_prob < self.nt:
+                    if avg_prob < self.nt: #free
                         disp_occ[i,j] = 0
-                    elif lij_num >= self.nt:
+                    elif lij_num >= self.lt: #occupied
                         disp_occ[i,j] = 32767
-                    else:
+                    else: #unknown
                         disp_occ[i,j] = 16383
-                else:
+                else: #free
                     disp_occ[i,j] = 0
 
         return disp_occ

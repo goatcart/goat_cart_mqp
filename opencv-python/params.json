@@ -40,7 +40,7 @@
     "speckleRange": 7,
     "speckleWindowSize": 255,
     "mode": 0,
-    "src": "dummy-stereo-3",
+    "src": "dummy-stereo-2",
     "main_cam": 1
   },
   "occupancyGrid": {
