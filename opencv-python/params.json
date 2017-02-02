@@ -15,6 +15,13 @@
       "enabled": true
     },
     {
+      "id": "dummy-stereo-3",
+      "type": "image",
+      "path": "calvin_test/",
+      "src": ["02L.png", "02R.png"],
+      "enabled": true
+    },
+    {
       "id": "webcam-stereo",
       "type": "vid",
       "src": [0, 1],
@@ -33,7 +40,7 @@
     "speckleRange": 7,
     "speckleWindowSize": 255,
     "mode": 0,
-    "src": "dummy-stereo-2",
+    "src": "dummy-stereo-3",
     "main_cam": 1
   },
   "occupancyGrid": {
@@ -60,6 +67,6 @@
     "wN": 0.5,
     "xRange": [-100, 100],
     "yRange": [0, 250],
-    "zRange": [0, 100]
+    "zRange": [0, 500]
   }
 }
