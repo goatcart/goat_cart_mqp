@@ -2,7 +2,8 @@
 
 import numpy as np
 import cv2
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from util.VidStream import SourceManager
 from util.StereoVision import StereoVision
 from util.OccupancyGrid import OccupancyGrid
@@ -10,6 +11,8 @@ import json
 
 stream = open('params.json')
 fs = json.load(stream)
+ocs = fs['occupancyGrid']
+
 vs = SourceManager(fs['video'])
 sv = StereoVision(vs)
 og = OccupancyGrid(fs['occupancyGrid'])
@@ -19,26 +22,36 @@ main_src = fs['matcher']['src']
 f = vs.get_frame(main_src)
 d, dl, dr = sv.compute(f)
 
-occ = og.compute(d)
+occ, im3d = og.compute(d)
+r3d = im3d.ravel()
+r3d = [
+    [(x + 1000) / 10.0 for x in r3d[0::3]],
+    [-y / 10.0 for y in r3d[1::3]],
+    [z / 10.0 for z in r3d[2::3]]
+]
 
+fig = plt.figure(1)
 
+ax_c = fig.add_subplot(221)
+ax_c.imshow(f[0])
+ax_c.set_title('Left Cam')
 
-plt.figure(1)
+ax_d = fig.add_subplot(222)
+ax_d.imshow(d)
+ax_d.set_title('Depth Map (final)')
 
-plt.subplot(221)
-plt.imshow(f[0])
-plt.title('Left Cam')
+ax_3d = fig.add_subplot(223, projection='3d')
+ax_3d.scatter(r3d[0][::50], r3d[1][::50], r3d[2][::50], s=0.25)
+ax_3d.set_xlabel('X')
+ax_3d.set_xlim(ocs['xRange'])
+ax_3d.set_ylim(ocs['yRange'])
+ax_3d.set_zlabel('Z')
+ax_3d.set_zlim(ocs['zRange'])
+ax_3d.set_title('Point Cloud (Occ)')
+ax_3d.view_init(5, -85)
 
-plt.subplot(222)
-plt.imshow(d)
-plt.title('Depth Map (final)')
-
-plt.subplot(223)
-plt.imshow(dl)
-plt.title('Depth Map (left)')
-
-plt.subplot(224)
-plt.imshow(occ)
-plt.title('Occupancy Grid')
+ax_og = fig.add_subplot(224)
+ax_og.imshow(occ)
+ax_og.set_title('Occupancy Grid')
 
 plt.show()

@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as sp
 import cv2
 from .util_fxn import load_mat
 from math import floor, sqrt, exp, log
@@ -30,6 +31,9 @@ class OccupancyGrid:
         for i in range(self.occupancy_size[0]):
             for j in range(self.occupancy_size[1]):
                 pt = image3d[i,j]
+                pt[0] = (pt[0] + 1000) / 10.0
+                pt[1] = -pt[1] / 10.0
+                pt[2] = pt[2] / 10.0
                 h = self.cam_h - pt[1]
                 if pt[0] > self.x_range[1] or pt[0] < self.x_range[0] or \
                     pt[1] > self.y_range[1] or pt[1] < self.y_range[0] or \
@@ -75,4 +79,4 @@ class OccupancyGrid:
                 else: #free
                     disp_occ[i,j] = 0
 
-        return disp_occ
+        return disp_occ, image3d
