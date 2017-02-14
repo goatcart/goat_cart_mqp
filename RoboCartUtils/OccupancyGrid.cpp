@@ -126,4 +126,3 @@ void OccupancyGrid::compute(cv::Mat &disparity, cv::Mat &dispOccupancy,
 OccupancyGrid::~OccupancyGrid() {
 	// TODO Auto-generated destructor stub
 }
-

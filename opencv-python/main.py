@@ -24,16 +24,17 @@ d, dl, dr = sv.compute(f)
 
 occ, im3d = og.compute(d)
 r3d = im3d.ravel()
+
 r3d = [
-    [(x + 1000) / 10.0 for x in r3d[0::3]],
-    [-y / 10.0 for y in r3d[1::3]],
-    [z / 10.0 for z in r3d[2::3]]
+    r3d[0::3],
+    r3d[1::3],
+    r3d[2::3]
 ]
 
 fig = plt.figure(1)
 
 ax_c = fig.add_subplot(221)
-ax_c.imshow(f[0])
+ax_c.imshow(cv2.cvtColor(f[0], cv2.COLOR_BGR2RGB))
 ax_c.set_title('Left Cam')
 
 ax_d = fig.add_subplot(222)

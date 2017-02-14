@@ -21,6 +21,8 @@ class OccupancyGrid:
         self.w_h = og_def['wH']
         self.nt = og_def['nt']
         self.lt = og_def['lt']
+        self.robot_width = og_def['robotWidth']
+        self.clearance = og_def['clearance']
 
     def compute(self, disp):
         image3d = cv2.reprojectImageTo3D(disp, self.q_mat, handleMissingValues=True)
@@ -31,12 +33,9 @@ class OccupancyGrid:
         for i in range(self.occupancy_size[0]):
             for j in range(self.occupancy_size[1]):
                 pt = image3d[i,j]
-                pt[0] = (pt[0] + 1000) / 10.0
-                pt[1] = -pt[1] / 10.0
-                pt[2] = pt[2] / 10.0
                 h = self.cam_h - pt[1]
                 if pt[0] > self.x_range[1] or pt[0] < self.x_range[0] or \
-                    pt[1] > self.y_range[1] or pt[1] < self.y_range[0] or \
+                    -pt[1] > self.y_range[1] or -pt[1] < self.y_range[0] or \
                     pt[2] > self.z_range[1] or pt[2] < self.z_range[0]:
                     continue
                 scaled_z = (pt[2] - self.z_range[0]) / (self.z_range[1] - self.z_range[0])
@@ -51,8 +50,8 @@ class OccupancyGrid:
         print(c)
         disp_occ = np.zeros(occupancy.shape, np.int16)
 
-        x_cam = self.occupancy_size[1] / 2
-        y_cam = self.occupancy_size[0] / 2
+        x_cam = self.occupancy_size[0] / 2
+        y_cam = self.occupancy_size[1] / 2
         for i in range(occupancy.shape[0]):
             for j in range(occupancy.shape[1]):
                 if occupancy[i,j] > 0:
@@ -78,5 +77,16 @@ class OccupancyGrid:
                         disp_occ[i,j] = 16383
                 else: #free
                     disp_occ[i,j] = 0
+
+        disp_occ[disp_occ == 16383] = 0
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
+
+        cell_width = (self.x_range[1] - self.x_range[0]) / occupancy.shape[1]
+        dilation_n = int((self.robot_width / 2 + self.clearance) / cell_width)
+
+        dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
+        disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         return disp_occ, image3d

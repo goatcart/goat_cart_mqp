@@ -18,7 +18,7 @@ class MatcherType(Enum):
     stereo_sgbm = 1
 
 class StereoVision:
-    factor = 0
+    factor = 1 / 16.0
 
     def __init__(self, src):
         self.__src = src
@@ -53,6 +53,8 @@ class StereoVision:
         self.disp_12_max_diff    = i_matcher['disp12MaxDiff']
         self.specke_range        = i_matcher['speckleRange']
         self.speckle_window_size = i_matcher['speckleWindowSize']
+        self.wls_lamba           = i_matcher['wlsLambda']
+        self.wls_sigma           = i_matcher['wlsSigma']
 
     def __init_matcher(self):
         if self.mode == MatcherType.stereo_bm:
@@ -68,8 +70,8 @@ class StereoVision:
         self.__left.setSpeckleWindowSize(self.speckle_window_size)
         self.__filter = createDisparityWLSFilter(self.__left)
         self.__right = createRightMatcher(self.__left)
-        self.__filter.setLambda(8000)
-        self.__filter.setSigmaColor(1.0)
+        self.__filter.setLambda(self.wls_lamba)
+        self.__filter.setSigmaColor(self.wls_sigma)
 
 
     def compute(self, frames):
@@ -85,6 +87,7 @@ class StereoVision:
         min_v, max_v, _, _ = cv2.minMaxLoc(disp)
         self.factor = 63 / (max_v - min_v) + self.factor * 0.75
         disp = (disp * self.factor).astype('uint8')
+        disp_l = (disp_l.clip(min=0) * self.factor).astype('uint8')
         return disp, disp_l, disp_r
 
     def avg_time(self):
