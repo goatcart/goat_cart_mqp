@@ -5,8 +5,8 @@ from .util_fxn import load_mat
 from math import floor, sqrt, exp, log
 
 class OccupancyGrid:
-    def __init__(self, og_def):
-        self.q_mat = load_mat(og_def['Q'])
+    def __init__(self, cam_props, og_def):
+        self.q_mat = load_mat(cam_props['Q'])
         self.og_def = og_def
         self.occupancy_size = tuple(og_def['occupancySize'])
         self.x_range = tuple(og_def['xRange'])
@@ -30,8 +30,8 @@ class OccupancyGrid:
         height = np.zeros(self.occupancy_size)
 
         c = 0
-        for i in range(self.occupancy_size[0]):
-            for j in range(self.occupancy_size[1]):
+        for i in range(image3d.shape[0]):
+            for j in range(image3d.shape[1]):
                 pt = image3d[i,j]
                 h = self.cam_h - pt[1]
                 if pt[0] > self.x_range[1] or pt[0] < self.x_range[0] or \
@@ -57,13 +57,13 @@ class OccupancyGrid:
                 if occupancy[i,j] > 0:
                     x_pt = j
                     y_pt = i
-                    dist_to_cam = sqrt((x_cam - y_pt) ** 2 +
+                    dist_to_cam = sqrt((x_cam - x_pt) ** 2 +
                         (y_cam - y_pt) ** 2)
                     adjusted_num = occupancy[i,j] * self.r / (1 + exp(-dist_to_cam * self.c))
                     pij_num = 1 - exp(-(adjusted_num / self.delta_n))
                     lij_num = log(pij_num / (1 - pij_num)) if pij_num != 1 else 0
 
-                    avg_height = height[i,j] / occupancy [i,j] if occupancy[i,j] > 0 else 0
+                    avg_height = height[i,j] / occupancy[i,j] if occupancy[i,j] > 0 else 0
                     pij_height = 1 - exp(-avg_height / self.delta_h)
                     lij_height = log(pij_height / (1 - pij_height)) if pij_height != 1 else 0
 
@@ -72,14 +72,15 @@ class OccupancyGrid:
                     if avg_prob < self.nt: #free
                         disp_occ[i,j] = 0
                     elif lij_num >= self.lt: #occupied
-                        disp_occ[i,j] = 32767
+                        disp_occ[i,j] = 2
                     else: #unknown
-                        disp_occ[i,j] = 16383
+                        disp_occ[i,j] = 1
                 else: #free
                     disp_occ[i,j] = 0
-        disp_occ[disp_occ == 16383] = 0
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        disp_occ[disp_occ == 1] = 0
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
         disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
 
         cell_width = (self.x_range[1] - self.x_range[0]) / occupancy.shape[1]

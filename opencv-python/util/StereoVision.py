@@ -30,6 +30,7 @@ class StereoVision:
 
         fs = json.load(open('params.json', 'r'))
         i_matcher = fs['matcher']
+        cam_props = fs['src_props'][i_matcher['prop']]
 
         self.src_id = i_matcher['src']
 
@@ -61,19 +62,17 @@ class StereoVision:
         self.wls_sigma           = i_matcher['wlsSigma']
 
         # For rectification
-        self.m1                  = load_mat(i_matcher['M1'])
-        self.d1                  = load_mat(i_matcher['D1'])
-        self.m2                  = load_mat(i_matcher['M2'])
-        self.d2                  = load_mat(i_matcher['D2'])
-        self.r                   = load_mat(i_matcher['R'])
-        self.t                   = load_mat(i_matcher['T'])
-        self.r1                  = load_mat(i_matcher['R1'])
-        self.p1                  = load_mat(i_matcher['P1'])
-        self.r2                  = load_mat(i_matcher['R2'])
-        self.p2                  = load_mat(i_matcher['P2'])
-        self.q                   = load_mat(fs['occupancyGrid']['Q'])
-        print(self.p2)
-        print(i_matcher['P2'])
+        self.m1                  = load_mat(cam_props['M1'])
+        self.d1                  = load_mat(cam_props['D1'])
+        self.m2                  = load_mat(cam_props['M2'])
+        self.d2                  = load_mat(cam_props['D2'])
+        self.r                   = load_mat(cam_props['R'])
+        self.t                   = load_mat(cam_props['T'])
+        self.r1                  = load_mat(cam_props['R1'])
+        self.p1                  = load_mat(cam_props['P1'])
+        self.r2                  = load_mat(cam_props['R2'])
+        self.p2                  = load_mat(cam_props['P2'])
+        self.q                   = load_mat(cam_props['Q'])
 
     def __init_matcher(self):
         if self.mode == MatcherType.stereo_bm:
