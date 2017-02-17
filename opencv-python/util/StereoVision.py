@@ -72,6 +72,8 @@ class StereoVision:
         self.r2                  = load_mat(i_matcher['R2'])
         self.p2                  = load_mat(i_matcher['P2'])
         self.q                   = load_mat(fs['occupancyGrid']['Q'])
+        print(self.p2)
+        print(i_matcher['P2'])
 
     def __init_matcher(self):
         if self.mode == MatcherType.stereo_bm:
@@ -117,7 +119,7 @@ class StereoVision:
         min_v, max_v, _, _ = cv2.minMaxLoc(disp)
         #self.factor = 63 / (max_v - min_v) + self.factor * 0.75
         disp = (disp * self.factor).astype('float32')
-        disp_l = (disp_l.clip(min=0) * self.factor).astype('uint8')
+
         return disp, disp_l, disp_r
 
     def avg_time(self):

@@ -47,7 +47,7 @@ class OccupancyGrid:
                 height[row,col] += h
                 c += 1
 
-        print(c)
+        print('Valid Points:', c)
         disp_occ = np.zeros(occupancy.shape, np.int16)
 
         x_cam = self.occupancy_size[0] / 2
@@ -77,7 +77,6 @@ class OccupancyGrid:
                         disp_occ[i,j] = 16383
                 else: #free
                     disp_occ[i,j] = 0
-
         disp_occ[disp_occ == 16383] = 0
 
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
@@ -87,6 +86,6 @@ class OccupancyGrid:
         dilation_n = int((self.robot_width / 2 + self.clearance) / cell_width)
 
         dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
-        #disp_occ = cv2.dilate(disp_occ, dilation_kernel)
+        disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         return disp_occ, image3d
