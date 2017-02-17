@@ -5,8 +5,8 @@ from .util_fxn import load_mat
 from math import floor, sqrt, exp, log
 
 class OccupancyGrid:
-    def __init__(self, og_def):
-        self.q_mat = load_mat(og_def['Q'])
+    def __init__(self, cam_props, og_def):
+        self.q_mat = load_mat(cam_props['Q'])
         self.og_def = og_def
         self.occupancy_size = tuple(og_def['occupancySize'])
         self.x_range = tuple(og_def['xRange'])
@@ -30,8 +30,8 @@ class OccupancyGrid:
         height = np.zeros(self.occupancy_size)
 
         c = 0
-        for i in range(self.occupancy_size[0]):
-            for j in range(self.occupancy_size[1]):
+        for i in range(image3d.shape[0]):
+            for j in range(image3d.shape[1]):
                 pt = image3d[i,j]
                 h = self.cam_h - pt[1]
                 if pt[0] > self.x_range[1] or pt[0] < self.x_range[0] or \
@@ -87,6 +87,6 @@ class OccupancyGrid:
         dilation_n = int((self.robot_width / 2 + self.clearance) / cell_width)
 
         dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
-        #disp_occ = cv2.dilate(disp_occ, dilation_kernel)
+        disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         return disp_occ, image3d
