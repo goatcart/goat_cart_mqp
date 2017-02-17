@@ -41,7 +41,7 @@
     }
   ],
   "src_props": {
-    "o1": {
+    "gtmeira": {
       "R": {
         "shape": [3, 3],
         "data": [
@@ -146,7 +146,7 @@
     "wlsSigma": 1.0,
     "mode": 1,
     "src": "dummy-stereo-4",
-    "prop": "o1",
+    "prop": "gtmeira",
     "main_cam": 1
   },
   "occupancyGrid": {
