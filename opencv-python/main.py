@@ -34,11 +34,11 @@ r3d = [
 fig = plt.figure(1)
 
 ax_c = fig.add_subplot(221)
-ax_c.imshow(cv2.cvtColor(f[0], cv2.COLOR_BGR2RGB))
-ax_c.set_title('Left Cam')
+ax_c.imshow(dl, cmap='gray')
+ax_c.set_title('Depth Map')
 
 ax_d = fig.add_subplot(222)
-ax_d.imshow(d)
+ax_d.imshow(d, cmap='gray')
 ax_d.set_title('Depth Map (final)')
 
 ax_3d = fig.add_subplot(223, projection='3d')

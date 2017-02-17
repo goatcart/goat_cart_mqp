@@ -36,7 +36,7 @@ class ImageSource(SourceBase):
     def __init__(self, i_src):
         super().__init__(i_src)
         path = i_src['path']
-        self.__img = [cv2.imread(path + src) for src in i_src['src']]
+        self.__img = [cv2.imread(path + src, 1) for src in i_src['src']]
         self.__shape = self.__img[0].shape
 
     def size(self):

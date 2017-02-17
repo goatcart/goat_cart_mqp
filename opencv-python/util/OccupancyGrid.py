@@ -35,7 +35,7 @@ class OccupancyGrid:
                 pt = image3d[i,j]
                 h = self.cam_h - pt[1]
                 if pt[0] > self.x_range[1] or pt[0] < self.x_range[0] or \
-                    -pt[1] > self.y_range[1] or -pt[1] < self.y_range[0] or \
+                    h > self.y_range[1] or h < self.y_range[0] or \
                     pt[2] > self.z_range[1] or pt[2] < self.z_range[0]:
                     continue
                 scaled_z = (pt[2] - self.z_range[0]) / (self.z_range[1] - self.z_range[0])
@@ -87,6 +87,6 @@ class OccupancyGrid:
         dilation_n = int((self.robot_width / 2 + self.clearance) / cell_width)
 
         dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
-        disp_occ = cv2.dilate(disp_occ, dilation_kernel)
+        #disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         return disp_occ, image3d
