@@ -25,12 +25,10 @@ f = vid_stream.get_frame(main_src)
 d, dl, dr = vision.compute(f)
 
 occ, im3d = occ_grid.compute(d)
-r3d = im3d.ravel()
-
 r3d = [
-    r3d[0::3],
-    r3d[1::3],
-    r3d[2::3]
+    [pt[0] for pt in im3d],
+    [pt[1] for pt in im3d],
+    [pt[2] for pt in im3d]
 ]
 
 fig = plt.figure(1)
