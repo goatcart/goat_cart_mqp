@@ -4,6 +4,8 @@ import numpy as np
 __sides = ['left', 'right']
 
 class SourceBase:
+    _img = None
+
     def __init__(self, i_src):
         self.__info = i_src
 
@@ -22,31 +24,21 @@ class SourceBase:
             return self.__info['rez']
         return (480, 360)
 
-class DummySource(SourceBase):
-    def __init__(self, i_src):
-        super().__init__(i_src)
-
-    def f_grab(self):
+    def update(self):
         pass
 
-    def f_retrieve(self):
-        return None
+    def frames(self):
+        return self._img
 
 class ImageSource(SourceBase):
     def __init__(self, i_src):
         super().__init__(i_src)
         path = i_src['path']
-        self.__img = [cv2.imread(path + src, 1) for src in i_src['src']]
-        self.__shape = self.__img[0].shape
+        self._img = [cv2.imread(path + src, 1) for src in i_src['src']]
+        self.__shape = self._img[0].shape
 
     def size(self):
         return (self.__shape[1], self.__shape[0])
-
-    def f_grab(self):
-        pass
-
-    def f_retrieve(self):
-        return [np.copy(img) for img in self.__img]
 
 ### Yeah, needs to be improved
 class VidSource(SourceBase):
@@ -59,35 +51,33 @@ class VidSource(SourceBase):
             cam.set(cv2.CAP_PROP_FRAME_HEIGHT, i_src['src-rez'][1])
             self.__src.add(cam)
 
-    def f_grab(self):
+    def update(self):
         for src in self.__src:
             src.grab()
-
-    def f_retrieve(self):
         success = True
-        frame = []
-        for src in self.__src:
-            ret, frame_ = self.__src.retrieve()
-            frame.add(frame_)
-        return frame
+        self._img = [frame for ret, frame in self.__src.retrieve()]
 
 
 class SourceManager:
     __streams = {}
-    def __init__(self, vid_info):
-        self.__info = vid_info
-        for i_src in vid_info:
-            if i_src['enabled']:
-                src = DummySource(None)
-                if i_src['type'] == 'image':
-                    src = ImageSource(i_src)
+    def __init__(self, sources, source_props):
+        self.__sources = sources
+        self.__source_props = source_props
+        for source in sources:
+            if source['enabled']:
+                src = SourceBase(None)
+                if source['type'] == 'image':
+                    src = ImageSource(source)
                 elif i_src['type'] == 'cap':
-                    src = VidSource(i_src)
-                self.__streams[i_src['id']] = src
-
-    def get_frame(self, src):
-        self.__streams[src].f_grab()
-        return self.__streams[src].f_retrieve()
+                    src = VidSource(source)
+                self.__streams[source['id']] = src
 
     def get(self, src):
         return self.__streams[src]
+
+    def get_props(self, src_id):
+        return self.__source_props[src_id]
+
+    def update(self):
+        for src in self.__sources:
+            src.update()

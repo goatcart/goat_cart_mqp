@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import cv2
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from util.VidStream import SourceManager
-from util.StereoVision import StereoVision
-from util.OccupancyGrid import OccupancyGrid
+from util.Planner import Planner
 import json
 
 stream = open('params.json')
-fs = json.load(stream)
+params = json.load(stream)
+
+planner = Planner(params)
+
+planner.update()
+planner.render();
+
+'''
 i_occ = fs['occupancyGrid']
 i_matcher = fs['matcher']
 cam_props = fs['src_props'][i_matcher['prop']]
@@ -56,3 +58,4 @@ ax_og.imshow(occ)
 ax_og.set_title('Occupancy Grid')
 
 plt.show()
+'''

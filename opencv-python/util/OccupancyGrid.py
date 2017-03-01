@@ -11,41 +11,43 @@ For more information on the algoritm used, look at his Master's Thesis
 https://web.wpi.edu/Pubs/ETD/Available/etd-042616-234937/unrestricted/msthesis-guilhermemeira-finalversion.pdf
 '''
 class OccupancyGrid:
-    def __init__(self, cam_props, og_def):
+    def __init__(self, vision, occupancy_params):
+        self.__vision = vision
+        self.__params = occupancy_params
         # Disparity-to-Depth Matrix
-        self.q_mat = load_mat(cam_props['Q'])
-        # Occupancy Grid Properties
-        self.og_def = og_def
+        self.q_mat = vision.q
         # Dimensions of the occupancy grid
-        self.occupancy_size = tuple(og_def['occupancySize'])
+        self.occupancy_size = tuple(occupancy_params['occupancySize'])
         # 3-D bounds of the space used to form the occupancy grid
-        self.x_range = tuple(og_def['xRange'])
-        self.y_range = tuple(og_def['yRange'])
-        self.z_range = tuple(og_def['zRange'])
+        self.x_range = tuple(occupancy_params['xRange'])
+        self.y_range = tuple(occupancy_params['yRange'])
+        self.z_range = tuple(occupancy_params['zRange'])
         # The y position of the camera
-        self.cam_h = og_def['cameraHeight']
-        self.r = og_def['r']
-        self.c = og_def['c']
+        self.cam_h = occupancy_params['cameraHeight']
+        self.r = occupancy_params['r']
+        self.c = occupancy_params['c']
         # Probability coefficients
-        self.delta_n = og_def['deltaN']
-        self.delta_h = og_def['deltaH']
+        self.delta_n = occupancy_params['deltaN']
+        self.delta_h = occupancy_params['deltaH']
         # Weights
-        self.w_n = og_def['wN']
-        self.w_h = og_def['wH']
+        self.w_n = occupancy_params['wN']
+        self.w_h = occupancy_params['wH']
         # Limits for occ status
-        self.nt = og_def['nt']
-        self.lt = og_def['lt']
+        self.nt = occupancy_params['nt']
+        self.lt = occupancy_params['lt']
         # Robot info
-        self.robot_width = og_def['robotWidth']
-        self.clearance = og_def['clearance']
+        self.robot_width = occupancy_params['robotWidth']
+        self.clearance = occupancy_params['clearance']
 
-    def compute(self, disp):
+    def update(self):
+        disparity = self.__vision.disparity
         # Create point cloud
-        image3d = cv2.reprojectImageTo3D(disp, self.q_mat, handleMissingValues=True)
-        # Point cloud in box
-        pc = []
+        image3d = cv2.reprojectImageTo3D( \
+            disparity, self.q_mat, handleMissingValues=True)
         occupancy = np.zeros(self.occupancy_size)
         height = np.zeros(self.occupancy_size)
+        # Final Occupancy Grid
+        disp_occ = np.zeros(occupancy.shape, np.int16)
 
         # For each point in image
         for i in range(image3d.shape[0]):
@@ -72,12 +74,6 @@ class OccupancyGrid:
                 occupancy[row,col] += 1
                 # Sum of heights in that cell (to find average)
                 height[row,col] += h
-                pc.append((pt[0], h, pt[2]))
-
-        # Total # of valid points
-        print(len(pc))
-        # Final Occupancy Grid
-        disp_occ = np.zeros(occupancy.shape, np.int16)
 
         # Location of camera on occupancy grid
         x_cam = self.occupancy_size[0] / 2
@@ -145,4 +141,4 @@ class OccupancyGrid:
         disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         # Return the occupancy grid and the point cloud
-        return disp_occ, pc
+        self.occupancy = disp_occ

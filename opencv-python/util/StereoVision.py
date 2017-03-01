@@ -21,26 +21,26 @@ class MatcherType(Enum):
 class StereoVision:
     # Final depth map scaling factor
     factor = 1 / 16.0
+    disparity = None
 
-    def __init__(self, src):
-        self.__src = src
+    def __init__(self, src, matcher_params):
+        self.__sources = src
+        self.__params = matcher_params
         self.__load_settings()
         self.__init_matcher()
 
     def __load_settings(self):
+        self.src_id   = self.__params['src']
+        self.prop_id  = self.__params['prop']
+        self.__source = self.__sources.get(self.src_id)
+        source_props  = self.__sources.get_props(self.prop_id)
 
-        fs = json.load(open('params.json', 'r'))
-        i_matcher = fs['matcher']
-        cam_props = fs['src_props'][i_matcher['prop']]
-
-        self.src_id = i_matcher['src']
-
-        if i_matcher['mode'] == 1:
+        if self.__params['mode'] == 1:
             self.mode = MatcherType.stereo_sgbm
         else:
             self.mode = MatcherType.stereo_bm
 
-        self.scale_factor = self.__src.get(self.src_id).scale()
+        self.scale_factor = self.__source.scale()
 
         if self.mode == MatcherType.stereo_sgbm:
             self.block_size = 5
@@ -49,31 +49,31 @@ class StereoVision:
         else:
             self.block_size = 15
 
-        self.size                = self.__src.get(self.src_id).size()
-        if i_matcher['numDisparities'] < 0:
+        self.size                = self.__source.size()
+        if self.__params['numDisparities'] < 0:
             self.num_disp        = calc_disp(self.size[0], self.scale_factor)
         else:
-            self.num_disp        = i_matcher['numDisparities']
-        self.pre_filter_cap      = i_matcher['preFilterCap']
-        self.uniqueness_ratio    = i_matcher['uniquenessRatio']
-        self.disp_12_max_diff    = i_matcher['disp12MaxDiff']
-        self.specke_range        = i_matcher['speckleRange']
-        self.speckle_window_size = i_matcher['speckleWindowSize']
-        self.wls_lamba           = i_matcher['wlsLambda']
-        self.wls_sigma           = i_matcher['wlsSigma']
+            self.num_disp        = self.__params['numDisparities']
+        self.pre_filter_cap      = self.__params['preFilterCap']
+        self.uniqueness_ratio    = self.__params['uniquenessRatio']
+        self.disp_12_max_diff    = self.__params['disp12MaxDiff']
+        self.specke_range        = self.__params['speckleRange']
+        self.speckle_window_size = self.__params['speckleWindowSize']
+        self.wls_lamba           = self.__params['wlsLambda']
+        self.wls_sigma           = self.__params['wlsSigma']
 
         # For rectification, load camera intrinsics + extrinsics
-        self.m1                  = load_mat(cam_props['M1'])
-        self.d1                  = load_mat(cam_props['D1'])
-        self.m2                  = load_mat(cam_props['M2'])
-        self.d2                  = load_mat(cam_props['D2'])
-        self.r                   = load_mat(cam_props['R'])
-        self.t                   = load_mat(cam_props['T'])
-        self.r1                  = load_mat(cam_props['R1'])
-        self.p1                  = load_mat(cam_props['P1'])
-        self.r2                  = load_mat(cam_props['R2'])
-        self.p2                  = load_mat(cam_props['P2'])
-        self.q                   = load_mat(cam_props['Q'])
+        self.m1                  = load_mat(source_props['M1'])
+        self.d1                  = load_mat(source_props['D1'])
+        self.m2                  = load_mat(source_props['M2'])
+        self.d2                  = load_mat(source_props['D2'])
+        self.r                   = load_mat(source_props['R'])
+        self.t                   = load_mat(source_props['T'])
+        self.r1                  = load_mat(source_props['R1'])
+        self.p1                  = load_mat(source_props['P1'])
+        self.r2                  = load_mat(source_props['R2'])
+        self.p2                  = load_mat(source_props['P2'])
+        self.q                   = load_mat(source_props['Q'])
 
 # TODO convert to using BM instead of SGBM
 
@@ -113,7 +113,8 @@ class StereoVision:
             int_roi[0], int_roi[0] + int_roi[2])
 
 
-    def compute(self, frames):
+    def update(self):
+        frames = self.__source.frames()
         # Undistort left + right frames
         frame_l = cv2.remap(frames[0], self.m1_[0], self.m1_[1], cv2.INTER_LINEAR)
         frame_r = cv2.remap(frames[1], self.m2_[0], self.m2_[1], cv2.INTER_LINEAR)
@@ -136,8 +137,7 @@ class StereoVision:
         ).clip(min=0)
         # Scale result, and make 32-bit float (for occ grid)
         disp = (disp * self.factor).astype('float32')
-        # Return disparity maps
-        return disp, disp_l, disp_r
+        self.disparity = disp
 
     def avg_time(self):
         pass
