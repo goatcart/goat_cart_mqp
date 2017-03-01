@@ -136,17 +136,41 @@
     }
   },
   "matcher": {
-    "preFilterCap": 1,
-    "numDisparities": -1,
-    "uniquenessRatio": 19,
-    "disp12MaxDiff": 100,
-    "speckleRange": 10,
-    "speckleWindowSize": 1000,
-    "wlsLambda": 8000,
-    "wlsSigma": 1.0,
-    "mode": 1,
+    "m_props": {
+      "gm-sgbm": {
+        "preFilterCap": 1,
+        "numDisparities": -1,
+        "uniquenessRatio": 19,
+        "disp12MaxDiff": 100,
+        "speckleRange": 10,
+        "speckleWindowSize": 1000,
+        "mode": 1
+      },
+      "gm-bm": {
+        "minDisparity": 0,
+        "numDisparities": 32,
+        "blockSize": 11,
+        "disp12MaxDiff": 100,
+        "preFilterCap": 1,
+        "uniquenessRatio": 3,
+        "speckleWindowSize": 1000,
+        "speckleRange": 10,
+        "mode": 0
+      },
+      "pl-sgbm": {
+        "preFilterCap": 63,
+        "uniquenessRatio": 15,
+        "disp12MaxDiff": 2048,
+        "speckleRange": 7,
+        "speckleWindowSize": 255,
+        "mode": 1
+      }
+    },
+    "cfg": "gm-sgbm",
     "src": "dummy-stereo-4",
     "prop": "gtmeira",
+    "wlsLambda": 8000,
+    "wlsSigma": 1.0,
     "main_cam": 1
   },
   "occupancyGrid": {

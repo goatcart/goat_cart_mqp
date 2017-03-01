@@ -30,12 +30,14 @@ class StereoVision:
         self.__init_matcher()
 
     def __load_settings(self):
+        self.cfg_id   = self.__params['cfg']
         self.src_id   = self.__params['src']
         self.prop_id  = self.__params['prop']
         self.__source = self.__sources.get(self.src_id)
         source_props  = self.__sources.get_props(self.prop_id)
+        matcher_props = self.__params['m_props'][self.cfg_id]
 
-        if self.__params['mode'] == 1:
+        if matcher_props['mode'] == 1:
             self.mode = MatcherType.stereo_sgbm
         else:
             self.mode = MatcherType.stereo_bm
@@ -50,15 +52,15 @@ class StereoVision:
             self.block_size = 15
 
         self.size                = self.__source.size()
-        if self.__params['numDisparities'] < 0:
+        if matcher_props['numDisparities'] < 0:
             self.num_disp        = calc_disp(self.size[0], self.scale_factor)
         else:
-            self.num_disp        = self.__params['numDisparities']
-        self.pre_filter_cap      = self.__params['preFilterCap']
-        self.uniqueness_ratio    = self.__params['uniquenessRatio']
-        self.disp_12_max_diff    = self.__params['disp12MaxDiff']
-        self.specke_range        = self.__params['speckleRange']
-        self.speckle_window_size = self.__params['speckleWindowSize']
+            self.num_disp        = matcher_props['numDisparities']
+        self.pre_filter_cap      = matcher_props['preFilterCap']
+        self.uniqueness_ratio    = matcher_props['uniquenessRatio']
+        self.disp_12_max_diff    = matcher_props['disp12MaxDiff']
+        self.specke_range        = matcher_props['speckleRange']
+        self.speckle_window_size = matcher_props['speckleWindowSize']
         self.wls_lamba           = self.__params['wlsLambda']
         self.wls_sigma           = self.__params['wlsSigma']
 
