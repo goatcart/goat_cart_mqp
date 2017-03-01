@@ -10,7 +10,7 @@ params = json.load(stream)
 planner = Planner(params)
 
 planner.update()
-planner.render();
+planner.render()
 
 '''
 i_occ = fs['occupancyGrid']

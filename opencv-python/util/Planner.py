@@ -27,7 +27,7 @@ class Planner:
         o_start = time.clock()
         self.occupancy.update()
         o_time = time.clock() - o_start
-        print("Vision Time = {0}\nOcc Time = {1}".format(v_time, o_time))
+        print("Vision Time = {0}\nOcc Time = {1}\nTotal Time = {2}".format(v_time, o_time, v_time+o_time))
 
     def render(self):
         fig = plt.figure(1)

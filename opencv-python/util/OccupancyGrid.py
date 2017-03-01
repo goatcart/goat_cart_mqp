@@ -75,16 +75,17 @@ class OccupancyGrid:
         span = time.clock() - start
         print('Mat Time = {0}'.format(span))
 
-        start = time.clock()
         for pt, h in zip(scaledCoords[~invalid], s_pts[:,:,1][~invalid]):
-            height[pt] += h
-            occupancy[pt] += 1
+            height[pt[0],pt[1]] += h
+            occupancy[pt[0],pt[1]] += 1
         span = time.clock() - start
         print('Loop1 Time = {0}'.format(span))
 
         # Location of camera on occupancy grid
         x_cam = self.occupancy_size[0] / 2
         y_cam = self.occupancy_size[1]
+
+        start = time.clock()
         # For each cell in grid
         for i in range(occupancy.shape[0]):
             for j in range(occupancy.shape[1]):
@@ -129,6 +130,8 @@ class OccupancyGrid:
                         disp_occ[i,j] = 1
                 else: # There is definitely nothing here
                     disp_occ[i,j] = 0
+        span = time.clock() - start
+        print('Loop2 Time = {0}'.format(span))
 
         # We don't care about the 'unknowns'
         disp_occ[disp_occ == 1] = 0
