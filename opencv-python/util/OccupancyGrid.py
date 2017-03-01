@@ -1,8 +1,10 @@
 import numpy as np
+import numpy.ma as ma
 import scipy as sp
 import cv2
 from .util_fxn import load_mat
 from math import floor, sqrt, exp, log
+import time
 
 '''
 Translated from C++ occupancy grid implementation by Guilherme Meira
@@ -49,31 +51,36 @@ class OccupancyGrid:
         # Final Occupancy Grid
         disp_occ = np.zeros(occupancy.shape, np.int16)
 
-        # For each point in image
-        for i in range(image3d.shape[0]):
-            for j in range(image3d.shape[1]):
-                pt = image3d[i,j]
-                # pt.y is the y offset of the point relative the the camera
-                # it is also the opposite of the actual value (down is +)
-                h = self.cam_h - pt[1]
-                # Is the point in the 3d box in front of the camera?
-                if pt[0] > self.x_range[1] or pt[0] < self.x_range[0] or \
-                    h > self.y_range[1] or h < self.y_range[0] or \
-                    pt[2] > self.z_range[1] or pt[2] < self.z_range[0]:
-                    continue
-                # Scale z to be in the range [0, 1]
-                scaled_z = (pt[2] - self.z_range[0]) / (self.z_range[1] - self.z_range[0])
-                # Scale x to be in the range [0, 1]
-                scaled_x = (pt[0] - self.x_range[0]) / (self.x_range[1] - self.x_range[0])
+        start = time.clock()
+        # pt.y is the y offset of the point relative the the camera
+        # it is also the opposite of the actual value (down is +)
+        # Scale Z+X to [0,1]
 
-                # Which row? Scale to fit grid width and flip (z = 0 is at last row)
-                row = int(self.occupancy_size[0] - floor(scaled_z * self.occupancy_size[0]))
-                # Which column? Scale to fit grid width
-                col = int(floor(scaled_x * self.occupancy_size[1]))
-                # One more point in that cell
-                occupancy[row,col] += 1
-                # Sum of heights in that cell (to find average)
-                height[row,col] += h
+        s_pts = np.dstack((
+            (image3d[:,:,0] - self.x_range[0]) / (self.x_range[1] - self.x_range[0]),
+            self.cam_h - image3d[:,:,1],
+            (image3d[:,:,2] - self.z_range[0]) / (self.z_range[1] - self.z_range[0])
+        ))
+
+        invalid = np.any(np.dstack((
+            s_pts[:,:,0] < 0, s_pts[:,:,0] > 1,
+            s_pts[:,:,2] < 0, s_pts[:,:,2] > 1,
+            s_pts[:,:,1] < self.y_range[0], s_pts[:,:,1] > self.y_range[1]
+        )), axis=2)
+
+        scaledCoords = np.dstack((
+            self.occupancy_size[0] - np.floor(s_pts[:,:,2] * self.occupancy_size[0]),
+            np.floor(s_pts[:,:,0] * self.occupancy_size[1])
+        )).astype(int)
+        span = time.clock() - start
+        print('Mat Time = {0}'.format(span))
+
+        start = time.clock()
+        for pt, h in zip(scaledCoords[~invalid], s_pts[:,:,1][~invalid]):
+            height[pt] += h
+            occupancy[pt] += 1
+        span = time.clock() - start
+        print('Loop1 Time = {0}'.format(span))
 
         # Location of camera on occupancy grid
         x_cam = self.occupancy_size[0] / 2
