@@ -263,29 +263,52 @@
         "mode": 0
       }
     },
-    "cfg": "pl-sgbm",
+    "cfg": "pl-bm",
     "src": "dummy-stereo-2",
     "prop": "pllong",
     "wlsLambda": 8000,
     "wlsSigma": 1.0,
-    "main_cam": 1
+    "main_cam": 0
   },
   "occupancyGrid": {
-    "c": 0.2,
-    "cameraHeight": 70.485,
-    "clearance": 5.24,
-    "deltaH": 20,
-    "deltaN": 55,
-    "lt": -3,
-    "nt": -3.6,
-    "occupancySize": [200, 200],
-    "r": 7,
-    "robotLength": 78.74,
-    "robotWidth": 60.96,
-    "wH": 0.5,
-    "wN": 0.5,
-    "xRange": [-100, 100],
-    "yRange": [0, 250],
-    "zRange": [0, 500]
+    "o_props": {
+      "gtmeira": {
+        "c": 0.2,
+        "cameraHeight": 70.485,
+        "clearance": 5.24,
+        "deltaH": 20,
+        "deltaN": 55,
+        "lt": -3,
+        "nt": -3.6,
+        "occupancySize": [200, 200],
+        "r": 7,
+        "robotLength": 78.74,
+        "robotWidth": 60.96,
+        "wH": 0.5,
+        "wN": 0.5,
+        "xRange": [-100, 100],
+        "yRange": [0, 250],
+        "zRange": [0, 500]
+      },
+      "pllong": {
+        "c": 0.2,
+        "cameraHeight": 70.485,
+        "clearance": 5.24,
+        "deltaH": 20,
+        "deltaN": 55,
+        "lt": -3,
+        "nt": -3.6,
+        "occupancySize": [200, 200],
+        "r": 7,
+        "robotLength": 78.74,
+        "robotWidth": 60.96,
+        "wH": 0.5,
+        "wN": 0.5,
+        "xRange": [-100, 100],
+        "yRange": [0, 250],
+        "zRange": [0, 500]
+      }
+    },
+    "cfg": "pllong"
   }
 }

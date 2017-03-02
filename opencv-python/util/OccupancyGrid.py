@@ -15,6 +15,8 @@ https://web.wpi.edu/Pubs/ETD/Available/etd-042616-234937/unrestricted/msthesis-g
 class OccupancyGrid:
     def __init__(self, vision, occupancy_params):
         self.__vision = vision
+        self.__cfg = occupancy_params['cfg']
+        occupancy_params = occupancy_params['o_props'][self.__cfg]
         self.__params = occupancy_params
         # Disparity-to-Depth Matrix
         self.q_mat = vision.q
@@ -135,11 +137,11 @@ class OccupancyGrid:
         print('Loop2 Time = {0}'.format(span))
 
         # We don't care about the 'unknowns'
-        #disp_occ[disp_occ == 1] = 0
+        disp_occ[disp_occ == 1] = 0
 
         # Get rid of small clusters by eroding, then dilating
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-        #disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
 
         # Calculate width of cell relative to original 3d box width
         cell_width = (self.x_range[1] - self.x_range[0]) / occupancy.shape[1]
