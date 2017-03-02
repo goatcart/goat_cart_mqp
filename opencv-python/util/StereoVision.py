@@ -116,10 +116,10 @@ class StereoVision:
 
 
     def update(self):
-        frames = self.__source.frames()
+        frame_l, frame_r = self.__source.frames()
         # Undistort left + right frames
-        frame_l = cv2.remap(frames[0], self.m1_[0], self.m1_[1], cv2.INTER_LINEAR)
-        frame_r = cv2.remap(frames[1], self.m2_[0], self.m2_[1], cv2.INTER_LINEAR)
+        frame_l = cv2.remap(frame_l, self.m1_[0], self.m1_[1], cv2.INTER_LINEAR)
+        frame_r = cv2.remap(frame_r, self.m2_[0], self.m2_[1], cv2.INTER_LINEAR)
         # Convert to grayscale
         frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY).astype('uint8')
         frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY).astype('uint8')
@@ -138,8 +138,8 @@ class StereoVision:
             disparity_map_right=disp_r
         ).clip(min=0)
         # Scale result, and make 32-bit float (for occ grid)
-        disp = (disp * self.factor).astype('float32')
-        self.disparity = disp
+        self.left = (disp_l * self.factor).astype('float32')
+        self.disparity = (disp * self.factor).astype('float32')
 
     def avg_time(self):
         pass

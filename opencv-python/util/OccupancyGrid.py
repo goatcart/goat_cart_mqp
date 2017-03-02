@@ -75,6 +75,7 @@ class OccupancyGrid:
         span = time.clock() - start
         print('Mat Time = {0}'.format(span))
 
+        start = time.clock()
         for pt, h in zip(scaledCoords[~invalid], s_pts[:,:,1][~invalid]):
             height[pt[0],pt[1]] += h
             occupancy[pt[0],pt[1]] += 1
@@ -134,11 +135,11 @@ class OccupancyGrid:
         print('Loop2 Time = {0}'.format(span))
 
         # We don't care about the 'unknowns'
-        disp_occ[disp_occ == 1] = 0
+        #disp_occ[disp_occ == 1] = 0
 
         # Get rid of small clusters by eroding, then dilating
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-        disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
+        #disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
 
         # Calculate width of cell relative to original 3d box width
         cell_width = (self.x_range[1] - self.x_range[0]) / occupancy.shape[1]
@@ -148,7 +149,7 @@ class OccupancyGrid:
 
         # Dilate to ensure clearance
         dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
-        disp_occ = cv2.dilate(disp_occ, dilation_kernel)
+        #disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         # Return the occupancy grid and the point cloud
         self.occupancy = disp_occ
