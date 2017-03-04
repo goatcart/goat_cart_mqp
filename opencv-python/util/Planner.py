@@ -33,7 +33,7 @@ class Planner:
         fig = plt.figure(1)
 
         ax_d = fig.add_subplot(121)
-        ax_d.imshow(self.vision.disparity, cmap='gray')
+        ax_d.imshow(self.vision.disparity)
         ax_d.set_title('Depth Map')
 
         ax_og = fig.add_subplot(122)

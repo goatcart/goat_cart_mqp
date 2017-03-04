@@ -140,7 +140,7 @@ class OccupancyGrid:
         disp_occ[disp_occ == 1] = 0
 
         # Get rid of small clusters by eroding, then dilating
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
         disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
 
         # Calculate width of cell relative to original 3d box width
@@ -151,7 +151,7 @@ class OccupancyGrid:
 
         # Dilate to ensure clearance
         dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
-        #disp_occ = cv2.dilate(disp_occ, dilation_kernel)
+        disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         # Return the occupancy grid and the point cloud
         self.occupancy = disp_occ

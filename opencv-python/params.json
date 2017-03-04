@@ -233,7 +233,8 @@
         "disp12MaxDiff": 100,
         "speckleRange": 10,
         "speckleWindowSize": 1000,
-        "mode": 1
+        "mode": 1,
+        "remapped": true
       },
       "gm-bm": {
         "preFilterCap": 1,
@@ -242,10 +243,12 @@
         "disp12MaxDiff": 100,
         "speckleRange": 10,
         "speckleWindowSize": 1000,
-        "mode": 0
+        "mode": 0,
+        "remapped": true
       },
       "pl-sgbm": {
         "preFilterCap": 63,
+        "preFilterSize": 5,
         "numDisparities": -1,
         "uniquenessRatio": 15,
         "disp12MaxDiff": 2048,
@@ -255,6 +258,7 @@
       },
       "pl-bm": {
         "preFilterCap": 63,
+        "preFilterSize": 5,
         "numDisparities": -1,
         "uniquenessRatio": 15,
         "disp12MaxDiff": 2048,
@@ -263,11 +267,11 @@
         "mode": 0
       }
     },
-    "cfg": "pl-bm",
+    "cfg": "pl-sgbm",
     "src": "dummy-stereo-2",
     "prop": "pllong",
     "wlsLambda": 8000,
-    "wlsSigma": 1.0,
+    "wlsSigma": 2.0,
     "main_cam": 0
   },
   "occupancyGrid": {
