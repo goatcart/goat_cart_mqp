@@ -16,6 +16,8 @@ class OccupancyGrid:
     def __init__(self, vision, occupancy_params):
         self.__vision = vision
         self.__cfg = occupancy_params['cfg']
+        self.__c1 = occupancy_params['clean_up']
+        self.__c2 = occupancy_params['dilate']
         occupancy_params = occupancy_params['o_props'][self.__cfg]
         self.__params = occupancy_params
         # Disparity-to-Depth Matrix
@@ -139,19 +141,21 @@ class OccupancyGrid:
         # We don't care about the 'unknowns'
         disp_occ[disp_occ == 1] = 0
 
-        # Get rid of small clusters by eroding, then dilating
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-        disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
+        if self.__c1:
+            # Get rid of small clusters by eroding, then dilating
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+            disp_occ = cv2.morphologyEx(disp_occ, cv2.MORPH_OPEN, kernel)
 
-        # Calculate width of cell relative to original 3d box width
-        cell_width = (self.x_range[1] - self.x_range[0]) / occupancy.shape[1]
-        # Calculate dilation factor ('radius' of robot + bit extra)
-        # Then convert from width in terms of box to width in terms of cells
-        dilation_n = int((self.robot_width / 2 + self.clearance) / cell_width)
+            if self.__c2:
+                # Calculate width of cell relative to original 3d box width
+                cell_width = (self.x_range[1] - self.x_range[0]) / occupancy.shape[1]
+                # Calculate dilation factor ('radius' of robot + bit extra)
+                # Then convert from width in terms of box to width in terms of cells
+                dilation_n = int((self.robot_width / 2 + self.clearance) / cell_width)
 
-        # Dilate to ensure clearance
-        dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
-        disp_occ = cv2.dilate(disp_occ, dilation_kernel)
+                # Dilate to ensure clearance
+                dilation_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * dilation_n + 1, 1))
+                disp_occ = cv2.dilate(disp_occ, dilation_kernel)
 
         # Return the occupancy grid and the point cloud
         self.occupancy = disp_occ

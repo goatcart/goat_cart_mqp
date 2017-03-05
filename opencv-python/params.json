@@ -268,9 +268,9 @@
       }
     },
     "cfg": "gm-sgbm",
-    "src": "dummy-stereo-4",
-    "prop": "gtmeira",
-    "wlsOn": false,
+    "src": "dummy-stereo-2",
+    "prop": "pllong",
+    "wlsOn": true,
     "wlsLambda": 8000,
     "wlsSigma": 1.0,
     "main_cam": 0
@@ -297,7 +297,7 @@
       },
       "pllong": {
         "c": 0.2,
-        "cameraHeight": 70.485,
+        "cameraHeight": 50,
         "clearance": 5.24,
         "deltaH": 20,
         "deltaN": 55,
@@ -314,6 +314,8 @@
         "zRange": [0, 500]
       }
     },
-    "cfg": "gtmeira"
+    "cfg": "pllong",
+    "clean_up": true,
+    "dilate": false
   }
 }
