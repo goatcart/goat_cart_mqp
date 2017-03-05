@@ -64,6 +64,7 @@ class StereoVision:
         self.speckle_window_size = matcher_props['speckleWindowSize']
         self.wls_lamba           = self.__params['wlsLambda']
         self.wls_sigma           = self.__params['wlsSigma']
+        self.wls_on              = 'wlsOn' in self.__params and self.__params['wlsOn']
         if 'remapped' in matcher_props:
             self.remap           = not matcher_props['remapped']
         else:
@@ -117,11 +118,12 @@ class StereoVision:
         self.__left.setSpeckleWindowSize(self.speckle_window_size)
         # Create right-oriented matcher
         self.__right = createRightMatcher(self.__left)
-        # Create filter
-        self.__filter = createDisparityWLSFilterGeneric(True)
-        # Set iflter properties
-        self.__filter.setLambda(self.wls_lamba)
-        self.__filter.setSigmaColor(self.wls_sigma)
+        if self.wls_on:
+            # Create filter
+            self.__filter = createDisparityWLSFilterGeneric(True)
+            # Set iflter properties
+            self.__filter.setLambda(self.wls_lamba)
+            self.__filter.setSigmaColor(self.wls_sigma)
 
 
     def update(self):
@@ -132,24 +134,23 @@ class StereoVision:
         # Convert to grayscale
         frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY).astype('uint8')
         frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY).astype('uint8')
-        # Compute disparity maps
-        disp_l = self.__left.compute(frame_l, frame_r)
-        disp_r = self.__right.compute(frame_r, frame_l)
-        # Crop
-        disp_l = disp_l[self.roi[0]:self.roi[1], self.roi[2]:self.roi[3]]
-        disp_r = disp_r[self.roi[0]:self.roi[1], self.roi[2]:self.roi[3]]
-        # Use a WLS (Weighted-Least Squares) to find a better depth map
-        disp = self.__filter.filter(
-            disparity_map_left=disp_l,
-            left_view=frame_l,
-            disparity_map_right=disp_r,
-            right_view=frame_r
-        ).clip(min=0)
+        # Compute disparity map + crop
+        disp = self.__left.compute(frame_l, frame_r)
+        disp = disp[self.roi[0]:self.roi[1], self.roi[2]:self.roi[3]]
+        if self.wls_on:
+            disp_r = self.__right.compute(frame_r, frame_l)
+            disp_r = disp_r[self.roi[0]:self.roi[1], self.roi[2]:self.roi[3]]
+            # Use a WLS (Weighted-Least Squares) to find a better depth map
+            self.disparity = self.__filter.filter(
+                disparity_map_left=disp,
+                left_view=frame_l,
+                disparity_map_right=disp_r,
+                right_view=frame_r
+            ).clip(min=0)
+        else:
+            self.disparity = disp.clip(min=0)
         # Scale result, and make 32-bit float (for occ grid)
-        self.left = (disp_l.clip(min=0) * self.factor).astype('float32')
-        self.right = (disp_r.clip(min=0) * self.factor).astype('float32')
-        self.comb = (disp * self.factor).astype('float32')
-        self.disparity = self.left
+        self.disparity = (self.disparity * self.factor).astype('float32')
 
     def avg_time(self):
         pass
