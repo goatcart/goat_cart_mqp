@@ -2,7 +2,7 @@ import numpy as np
 import numpy.ma as ma
 import scipy as sp
 import cv2
-from .util_fxn import load_mat
+from .util_fxn import load_mat, div0
 from math import floor, sqrt, exp, log
 import time
 
@@ -44,6 +44,11 @@ class OccupancyGrid:
         # Robot info
         self.robot_width = occupancy_params['robotWidth']
         self.clearance = occupancy_params['clearance']
+        # Init coords
+        self.coords = np.zeros((200, 200, 2), np.int16)
+        for i in range(200):
+            self.coords[i, :, 0] = i
+            self.coords[:, i, 1] = i
 
     def update(self):
         disparity = self.__vision.disparity
@@ -61,28 +66,29 @@ class OccupancyGrid:
         # Scale Z+X to [0,1]
 
         s_pts = np.dstack((
-            (image3d[:,:,0] - self.x_range[0]) / (self.x_range[1] - self.x_range[0]),
-            self.cam_h - image3d[:,:,1],
-            (image3d[:,:,2] - self.z_range[0]) / (self.z_range[1] - self.z_range[0])
+            (image3d[:, :, 0] - self.x_range[0]) / (self.x_range[1] - self.x_range[0]),
+            self.cam_h - image3d[:, :, 1],
+            (image3d[:, :, 2] - self.z_range[0]) / (self.z_range[1] - self.z_range[0])
         ))
 
         invalid = np.any(np.dstack((
-            s_pts[:,:,0] < 0, s_pts[:,:,0] > 1,
-            s_pts[:,:,2] < 0, s_pts[:,:,2] > 1,
-            s_pts[:,:,1] < self.y_range[0], s_pts[:,:,1] > self.y_range[1]
+            s_pts[:, :, 0] < 0, s_pts[:, :, 0] > 1,
+            s_pts[:, :, 2] < 0, s_pts[:, :, 2] > 1,
+            s_pts[:, :, 1] < self.y_range[0], s_pts[:, :, 1] > self.y_range[1]
         )), axis=2)
 
         scaledCoords = np.dstack((
-            self.occupancy_size[0] - np.floor(s_pts[:,:,2] * self.occupancy_size[0]),
-            np.floor(s_pts[:,:,0] * self.occupancy_size[1])
+            self.occupancy_size[0] - np.floor(s_pts[:, :, 2] * self.occupancy_size[0]),
+            np.floor(s_pts[:, :, 0] * self.occupancy_size[1])
         )).astype(int)
         span = time.clock() - start
         print('Mat Time = {0}'.format(span))
 
         start = time.clock()
-        for pt, h in zip(scaledCoords[~invalid], s_pts[:,:,1][~invalid]):
-            height[pt[0],pt[1]] += h
-            occupancy[pt[0],pt[1]] += 1
+        for pt, h in zip(scaledCoords[~invalid], s_pts[:, :, 1][~invalid]):
+            height[pt[0], pt[1]] += h
+            occupancy[pt[0], pt[1]] += 1
+
         span = time.clock() - start
         print('Loop1 Time = {0}'.format(span))
 
@@ -91,50 +97,44 @@ class OccupancyGrid:
         y_cam = self.occupancy_size[1]
 
         start = time.clock()
-        # For each cell in grid
-        for i in range(occupancy.shape[0]):
-            for j in range(occupancy.shape[1]):
-                # Is there stuff at this cell?
-                if occupancy[i,j] > 0:
-                    # Get local copy of coords
-                    x_pt = j
-                    y_pt = i
-                    # Euler's formula
-                    dist_to_cam = sqrt((x_cam - x_pt) ** 2 +
-                        (y_cam - y_pt) ** 2)
-                    # Adjust the number of points in cell using sigmoid fxn
-                    # r and c are control coefficients
-                    adjusted_num = occupancy[i,j] * self.r / (1 + exp(-dist_to_cam * self.c))
-                    # Calculate probability of cell being occupied,
-                    # based on adjusted number of cell occupants
+        
+        lij_num    = np.zeros(occupancy.shape)
+        avg_height = np.zeros(occupancy.shape)
+        lij_height = np.zeros(occupancy.shape)
 
-                    # delta N is a parameter for the probability calculation
-                    pij_num = 1 - exp(-(adjusted_num / self.delta_n))
-                    # Convert probability to 'log-odds' (logit)
-                    lij_num = log(pij_num / (1 - pij_num)) if pij_num != 1 else 0
 
-                    # Get average height in cell
-                    avg_height = height[i,j] / occupancy[i,j] if occupancy[i,j] > 0 else 0
-                    # Calculate probability of cell being occupied,
-                    # based on average height of cell occupants
+        dist_to_cam = np.sqrt(np.sum(np.square(self.coords - [x_cam, y_cam])))
+        adjusted_num = occupancy * self.r / (1 + np.exp(-dist_to_cam * self.c))
+        # delta N is a parameter for the probability calculation
+        pij_num = 1 - np.exp(-(adjusted_num / self.delta_n))
+        # Convert probability to 'log-odds' (logit)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            lij_num = pij_num / (1 - pij_num)
+            lij_num[~np.isfinite(lij_num)] = 1
+            lij_num = np.log(lij_num)
 
-                    # delta H is a parameter for the probability calculation
-                    pij_height = 1 - exp(-avg_height / self.delta_h)
-                    # Convert probability to 'log-odds' (logit)
-                    lij_height = log(pij_height / (1 - pij_height)) if pij_height != 1 else 0
+        # Get average height in cell
+        avg_height = div0(height, occupancy)
+        
+        # Calculate probability of cell being occupied,
+        # based on average height of cell occupants
 
-                    # Estimate the probability that something is in the cell
-                    # This is a weighted average, so w_n + w_h = 1
-                    avg_prob = self.w_n * lij_num + self.w_h * lij_height
+        # delta H is a parameter for the probability calculation
+        pij_height = 1 - np.exp(-avg_height / self.delta_h)
+        # Convert probability to 'log-odds' (logit)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            lij_height = pij_height / (1 - pij_height)
+            lij_height[~np.isfinite(lij_height)] = 1
+            lij_height = np.log(lij_height)
 
-                    if avg_prob < self.nt: # Nothing here (probably)
-                        disp_occ[i,j] = 0
-                    elif lij_num >= self.lt: # Cell is occupied (probably)
-                        disp_occ[i,j] = 2
-                    else: # We don't know exactly
-                        disp_occ[i,j] = 1
-                else: # There is definitely nothing here
-                    disp_occ[i,j] = 0
+        # Estimate the probability that something is in the cell
+        # This is a weighted average, so w_n + w_h = 1
+        avg_prob = self.w_n * lij_num + self.w_h * lij_height
+
+        disp_occ[occupancy > 0] = 1 # Unknown
+        disp_occ[lij_num >= self.lt] = 2 # Cell is occupied (probably)
+        disp_occ[avg_prob < self.nt] = 0 # Nothing here (probably)
+
         span = time.clock() - start
         print('Loop2 Time = {0}'.format(span))
 

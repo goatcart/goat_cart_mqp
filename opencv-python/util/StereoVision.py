@@ -116,14 +116,14 @@ class StereoVision:
         self.__left.setDisp12MaxDiff(self.disp_12_max_diff)
         self.__left.setSpeckleRange(self.speckle_range)
         self.__left.setSpeckleWindowSize(self.speckle_window_size)
-        # Create right-oriented matcher
-        self.__right = createRightMatcher(self.__left)
         if self.wls_on:
             # Create filter
             self.__filter = createDisparityWLSFilterGeneric(True)
             # Set iflter properties
             self.__filter.setLambda(self.wls_lamba)
             self.__filter.setSigmaColor(self.wls_sigma)
+            # Create right-oriented matcher
+            self.__right = createRightMatcher(self.__left)
 
 
     def update(self):

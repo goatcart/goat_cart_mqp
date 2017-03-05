@@ -17,3 +17,10 @@ def intersection(a,b):
   h = min(a[1]+a[3], b[1]+b[3]) - y
   if w<0 or h<0: return () # or (0,0,0,0) ?
   return (x, y, w, h)
+
+def div0( a, b ):
+    """ ignore / 0, div0( [-1, 0, 1], 0 ) -> [0, 0, 0] """
+    with np.errstate(divide='ignore', invalid='ignore'):
+        c = np.true_divide( a, b )
+        c[ ~ np.isfinite( c )] = 0  # -inf inf NaN
+    return c

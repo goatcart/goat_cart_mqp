@@ -25,7 +25,7 @@
       "id": "dummy-stereo-4",
       "type": "image",
       "path": "../data/test_images/",
-      "src": ["left000.png", "right000.png"],
+      "src": ["left108.png", "right108.png"],
       "enabled": true
     },
     {
@@ -268,9 +268,9 @@
       }
     },
     "cfg": "gm-sgbm",
-    "src": "dummy-stereo-2",
-    "prop": "pllong",
-    "wlsOn": true,
+    "src": "dummy-stereo-4",
+    "prop": "gtmeira",
+    "wlsOn": false,
     "wlsLambda": 8000,
     "wlsSigma": 1.0,
     "main_cam": 0
@@ -314,8 +314,8 @@
         "zRange": [0, 500]
       }
     },
-    "cfg": "pllong",
+    "cfg": "gtmeira",
     "clean_up": true,
-    "dilate": false
+    "dilate": true
   }
 }
