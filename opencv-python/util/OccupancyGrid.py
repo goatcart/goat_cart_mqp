@@ -49,7 +49,11 @@ class OccupancyGrid:
         for i in range(200):
             self.coords[i, :, 0] = i
             self.coords[:, i, 1] = i
-        self.dist_to_cam = np.sqrt(np.sum(np.square(self.coords - [x_cam, y_cam])))
+        # Location of camera on occupancy grid
+        x_cam = self.occupancy_size[0] / 2
+        y_cam = self.occupancy_size[1]
+        # Distance from each point to camera
+        self.dist_to_cam = np.sqrt(np.sum(np.square(self.coords - [y_cam, x_cam])))
 
     def update(self):
         disparity = self.__vision.disparity
@@ -100,10 +104,6 @@ class OccupancyGrid:
 
         span = time.clock() - start
         print('Loop1 Time = {0}'.format(span))
-
-        # Location of camera on occupancy grid
-        x_cam = self.occupancy_size[0] / 2
-        y_cam = self.occupancy_size[1]
 
         ### Generate occupancy grid
         start = time.clock()
