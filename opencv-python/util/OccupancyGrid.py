@@ -49,34 +49,41 @@ class OccupancyGrid:
         for i in range(200):
             self.coords[i, :, 0] = i
             self.coords[:, i, 1] = i
+        self.dist_to_cam = np.sqrt(np.sum(np.square(self.coords - [x_cam, y_cam])))
 
     def update(self):
         disparity = self.__vision.disparity
         # Create point cloud
         image3d = cv2.reprojectImageTo3D( \
             disparity, self.q_mat, handleMissingValues=True)
-        occupancy = np.zeros(self.occupancy_size)
-        height = np.zeros(self.occupancy_size)
-        # Final Occupancy Grid
-        disp_occ = np.zeros(occupancy.shape, np.int16)
 
+        ### Generate matrices
         start = time.clock()
-        # pt.y is the y offset of the point relative the the camera
-        # it is also the opposite of the actual value (down is +)
-        # Scale Z+X to [0,1]
+        
+        # Create matrices
+        occupancy  = np.zeros(self.occupancy_size) # Number of points in cell
+        height     = np.zeros(occupancy.shape) # Total height of elements in cell
+        disp_occ   = np.zeros(occupancy.shape, np.int16) # Final Occupancy Grid
+        lij_num    = np.zeros(occupancy.shape) # Log-odds that cell is occupied (elements)
+        avg_height = np.zeros(occupancy.shape) # Average height of cell
+        lij_height = np.zeros(occupancy.shape) # Log-odds that cell is occupied (height)
 
+        # Filter PC coords so that (x, z) is in the range [0, 1]
+        # Y is adusted because input is height below camera
         s_pts = np.dstack((
             (image3d[:, :, 0] - self.x_range[0]) / (self.x_range[1] - self.x_range[0]),
             self.cam_h - image3d[:, :, 1],
             (image3d[:, :, 2] - self.z_range[0]) / (self.z_range[1] - self.z_range[0])
         ))
 
+        # Determine which points are valid (inside box)
         invalid = np.any(np.dstack((
             s_pts[:, :, 0] < 0, s_pts[:, :, 0] > 1,
             s_pts[:, :, 2] < 0, s_pts[:, :, 2] > 1,
             s_pts[:, :, 1] < self.y_range[0], s_pts[:, :, 1] > self.y_range[1]
         )), axis=2)
 
+        # Convert (z, x) into (row, col) for occ grid
         scaledCoords = np.dstack((
             self.occupancy_size[0] - np.floor(s_pts[:, :, 2] * self.occupancy_size[0]),
             np.floor(s_pts[:, :, 0] * self.occupancy_size[1])
@@ -85,6 +92,8 @@ class OccupancyGrid:
         print('Mat Time = {0}'.format(span))
 
         start = time.clock()
+
+        # Sum up heights and # of elements in each cell
         for pt, h in zip(scaledCoords[~invalid], s_pts[:, :, 1][~invalid]):
             height[pt[0], pt[1]] += h
             occupancy[pt[0], pt[1]] += 1
@@ -96,17 +105,15 @@ class OccupancyGrid:
         x_cam = self.occupancy_size[0] / 2
         y_cam = self.occupancy_size[1]
 
+        ### Generate occupancy grid
         start = time.clock()
-        
-        lij_num    = np.zeros(occupancy.shape)
-        avg_height = np.zeros(occupancy.shape)
-        lij_height = np.zeros(occupancy.shape)
 
+        # Adjust # of points in cell using sigmoid function
+        adjusted_num = occupancy * self.r / (1 + np.exp(-self.dist_to_cam * self.c))
 
-        dist_to_cam = np.sqrt(np.sum(np.square(self.coords - [x_cam, y_cam])))
-        adjusted_num = occupancy * self.r / (1 + np.exp(-dist_to_cam * self.c))
         # delta N is a parameter for the probability calculation
         pij_num = 1 - np.exp(-(adjusted_num / self.delta_n))
+        
         # Convert probability to 'log-odds' (logit)
         with np.errstate(divide='ignore', invalid='ignore'):
             lij_num = pij_num / (1 - pij_num)
@@ -121,6 +128,7 @@ class OccupancyGrid:
 
         # delta H is a parameter for the probability calculation
         pij_height = 1 - np.exp(-avg_height / self.delta_h)
+        
         # Convert probability to 'log-odds' (logit)
         with np.errstate(divide='ignore', invalid='ignore'):
             lij_height = pij_height / (1 - pij_height)

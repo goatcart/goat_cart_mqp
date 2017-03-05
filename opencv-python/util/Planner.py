@@ -14,12 +14,15 @@ class Planner:
     occupancy = None
 
     def __init__(self, params):
+        # Save params
         self.params = params
+        # Initialize planning components
         self.vid_src = SourceManager(params['video'], params['src_props'])
         self.vision = StereoVision(self.vid_src, params['matcher'])
         self.occupancy = OccupancyGrid(self.vision, params['occupancyGrid'])
 
     def update(self):
+        # Update planning components (and time)
         self.vid_src.update()
         v_start = time.clock()
         self.vision.update()
@@ -30,6 +33,7 @@ class Planner:
         print("Vision Time = {0}\nOcc Time = {1}\nTotal Time = {2}".format(v_time, o_time, v_time+o_time))
 
     def render(self):
+        # Show results
         fig = plt.figure(1)
 
         ax_d = fig.add_subplot(121)
