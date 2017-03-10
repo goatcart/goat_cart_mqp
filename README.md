@@ -1,5 +1,5 @@
 # Goat Cart
-![Courtesy of Gompei](https://github.com/novasharper/goat_cart_mqp/raw/master/docs/img/goat.png)
+![Courtesy of Gompei](https://github.com/goatcart/goat_cart_mqp/raw/master/docs/img/goat.png)
 
 ## Contributors
 * Patrick Long
@@ -13,4 +13,4 @@
 * https://github.com/opencv/opencv_contrib/blob/master/modules/ximgproc/samples/disparity_filtering.cpp
 
 ## Screenshot
-![stereo vision results](https://github.com/novasharper/goat_cart_mqp/raw/master/docs/img/results.png)
+![stereo vision results](https://github.com/goatcart/goat_cart_mqp/raw/master/docs/img/results.png)
