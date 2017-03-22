@@ -3,6 +3,11 @@ The 'digipot' module creates an interface for the golf cart to interact with the
 throttle potentiometer. There are 100 possible resistance values, which have
 been labeled 0-99 in the module code.
 
+Three functions are exposed for intended use:
+    - set_wipe()
+    - set_resistance()
+    - set_mph()
+
 The digipot should be connected to the Raspberry Pi as such:
     TODO insert ascii schematic here
 
@@ -22,9 +27,9 @@ class Digipot:
         self.inc_pin = inc_pin
         self.ud_pin = ud_pin
         # Characteristics
-        self.min_wipe = 0
         self.max_wipe = 99
-        self.resolution = 100 # ohm
+        self.max_resistance = 10000
+        self.max_mph = 15
         self.wiper_state = None # we'll know after setup
 
         # Set up all GPIO pins as output
@@ -34,21 +39,41 @@ class Digipot:
         GPIO.setup(self.ud_pin, GPIO.OUT)
 
         # Set the wiper_state to 0
-        self.set_wipe(self.min_wipe)
+        self.set_wipe(0)
 
     def set_wipe(self, wipe):
         """Set the digipot to a specific wipe value."""
-        # Validate the attempted value
-        if ~(self.min_wipe <= wipe <= self.max_wipe):
+        # Validate the desired value
+        if ~(0 <= wipe <= self.max_wipe):
+            return
+        if wipe > self.wiper_state: # We need to increase wipe
+            self._increase(wipe - self.wiper_state)
+        elif wipe < self.wiper_state: # We need to decrease wipe
+            self._decrease(self.wiper_state - wipe)
+        else: # We're already at the desired value
             return
 
     def set_resistance(self, resistance):
         """Set the digipot to a specific resistance."""
-        return
+        # Validate the desired value
+        if ~(0 <= resistance <= self.max_resistance):
+            return
+        # Round to the nearest wipe (multiple of 100 ohms)
+        wipe_equivalent = int(round(resistance, -2)) / 100
+        # Set the digipot
+        self.set_wipe(wipe_equivalent)
 
     def set_mph(self, mph):
         """Set the digipot to a specific speed in mph."""
-        return
+        # Validate the desired value
+        if ~(0 <= mph <= self.max_mph):
+            return
+        # Calculate R/mph, given that max speed occurs at 5.5kohm
+        resistance_per_mph = 5500.0 / self.max_mph
+        # Find the nearest appropriate wipe
+        wipe_equivalent = int(mph * resistance_per_mph)
+        # Set the digipot
+        self.set_wipe(wipe_equivalent)
 
     def _increase(self, num):
         """Increment the wiper 'num' times."""
@@ -93,9 +118,12 @@ class Digipot:
             self.wiper_state = 0
 
     def _write_non_volatile(self, val):
-        """Set the non-volatile register to 'val' wipes on boot."""
+        """Set the non-volatile register to 'val' wipes on boot.
+
+        You shouldn't ever need to use this, but it's written for completeness.
+        """
         # Ensure we're attempting to write a valid NV state
-        if ~(self.min_wipe <= val <= self.max_wipe):
+        if ~(0 <= val <= self.max_wipe):
             return # Don't attempt anything if out-of-range
         # Decrease the wiper to 0 wipes
         self.set_wipe(0)
