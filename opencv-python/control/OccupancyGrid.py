@@ -62,7 +62,6 @@ class OccupancyGrid:
             disparity, self.q_mat, handleMissingValues=True)
 
         ### Generate matrices
-        start = time.clock()
         
         # Create matrices
         occupancy  = np.zeros(self.occupancy_size) # Number of points in cell
@@ -92,21 +91,13 @@ class OccupancyGrid:
             self.occupancy_size[0] - np.floor(s_pts[:, :, 2] * self.occupancy_size[0]),
             np.floor(s_pts[:, :, 0] * self.occupancy_size[1])
         )).astype(int)
-        span = time.clock() - start
-        print('Mat Time = {0}'.format(span))
-
-        start = time.clock()
 
         # Sum up heights and # of elements in each cell
         for pt, h in zip(scaledCoords[~invalid], s_pts[:, :, 1][~invalid]):
             height[pt[0], pt[1]] += h
             occupancy[pt[0], pt[1]] += 1
 
-        span = time.clock() - start
-        print('Loop1 Time = {0}'.format(span))
-
         ### Generate occupancy grid
-        start = time.clock()
 
         # Adjust # of points in cell using sigmoid function
         adjusted_num = occupancy * self.r / (1 + np.exp(-self.dist_to_cam * self.c))
@@ -142,9 +133,6 @@ class OccupancyGrid:
         disp_occ[occupancy > 0] = 1 # Unknown
         disp_occ[lij_num >= self.lt] = 2 # Cell is occupied (probably)
         disp_occ[avg_prob < self.nt] = 0 # Nothing here (probably)
-
-        span = time.clock() - start
-        print('Loop2 Time = {0}'.format(span))
 
         # We don't care about the 'unknowns'
         disp_occ[disp_occ == 1] = 0
