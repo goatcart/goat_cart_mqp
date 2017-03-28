@@ -31,12 +31,12 @@ class Planner:
         self.vid_src = SourceManager(params['video'], params['src_props'])
         self.calib = CameraCalib(
             self.vid_src, self.src_id,
-            (6,7), 10, self.__finish_init)
+            (7,7), 10, self.__finish_init)
 
     def update(self):
         # Update planning components
         self.vid_src.update()
-        if self.calib.is_ready():
+        if self.calib.is_ready() and self.vision is not None:
             self.vision.update()
             self.occupancy.update()
     
@@ -55,18 +55,19 @@ class Planner:
         plt.show()
 
     def __finish_init(self):
-        self.vision = StereoVision(self.vid_src, self.calib, params['matcher'])
-        self.occupancy = OccupancyGrid(self.vision, self.calib, params['occupancyGrid'])
+        print ('finish_init')
+        self.vision = StereoVision(self.vid_src, self.calib, self.params['matcher'])
+        self.occupancy = OccupancyGrid(self.vision, self.calib, self.params['occupancyGrid'])
 
     def __kp(self, evt):
         if evt.key == 'q':
             print ('close')
             self.running = False
         if evt.key == 'c' and not self.calib.is_ready():
-            self.calib.update()
+            print(self.calib.update())
 
     def render(self):
-        if self.calib.is_ready():
+        if self.calib.is_ready() and self.vision is not None:
             self.ax_l.imshow(self.vision.disparity)
             self.ax_r.imshow(self.occupancy.occupancy)
         else:

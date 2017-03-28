@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import glob
+from .util_fxn import intersection
 
 class CameraCalib:
     def __init__(self, src, src_id, dim, target, callback):
@@ -14,7 +15,7 @@ class CameraCalib:
         self.objp = np.zeros((dim[0]*dim[1],3), np.float32)
         self.objp[:,:2] = np.mgrid[0:dim[1], 0:dim[0]].T.reshape(-1,2)
 
-        self.objpoints = []
+        self.objectPoints = []
         self.imagePoints = [[], []]
 
         self.flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
@@ -29,14 +30,29 @@ class CameraCalib:
     def update(self):
         if self.is_ready():
             return
-        success = 0
+        found = False
         frame_l, frame_r = self.__src.frames()
         frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY)
         frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY)
-        ret_l, corners_l = cv2.findChessboardCorners(frame_l, self.dim, self.flags)
-        ret_r, corners_r = cv2.findChessboardCorners(frame_r, self.dim, self.flags)
-        if ret_l == True and ret_r == True:
-            self.objpoints.append(self.objp)
+        corners_l = None
+        corners_r = None
+        for scale in [1, 2]:
+            if scale == 1:
+                img_l = frame_l
+                img_r = frame_r
+            else:
+                img_l = cv2.resize(frame_l, (0,0), fx=scale, fy=scale)
+            ret_l, corners_l = cv2.findChessboardCorners(frame_l, self.dim, self.flags)
+            ret_r, corners_r = cv2.findChessboardCorners(frame_r, self.dim, self.flags)
+            found = ret_l and ret_r
+            if found:
+                if scale > 1:
+                    corners_l *= 1.0 / scale
+                    corners_r *= 1.0 / scale
+                    print('SC')
+                break
+        if found:
+            self.objectPoints.append(self.objp)
             corners2l = cv2.cornerSubPix(frame_l, corners_l, (11, 11), (-1, -1), self.criteria)
             corners2r = cv2.cornerSubPix(frame_r, corners_r, (11, 11), (-1, -1), self.criteria)
             self.imagePoints[0].append(corners2l)
@@ -50,7 +66,7 @@ class CameraCalib:
     def __calib(self):
         if not (self.is_ready() or self.calib_done):
             return
-        self.objpoints = np.array(self.objpoints)
+        self.objectPoints = np.array(self.objectPoints)
         self.imagePoints[0] = np.array(self.imagePoints[0])
         self.imagePoints[1] = np.array(self.imagePoints[1])
         # Get camera matrix
@@ -88,8 +104,8 @@ class CameraCalib:
         self.q = Q
         self.validRoi = [roi1, roi2]
         # Get undistortion matrices
-        self.m1_ = cv2.initUndistortRectifyMap(self.m1, self.d1, self.r1, self.p1, self.size, cv2.CV_16SC2)
-        self.m2_ = cv2.initUndistortRectifyMap(self.m2, self.d2, self.r2, self.p2, self.size, cv2.CV_16SC2)
+        self.m1_ = cv2.initUndistortRectifyMap(self.cameraMatrix[0], self.distCoeff[0], self.r1, self.p1, self.size, cv2.CV_16SC2)
+        self.m2_ = cv2.initUndistortRectifyMap(self.cameraMatrix[1], self.distCoeff[1], self.r2, self.p2, self.size, cv2.CV_16SC2)
         # Intersect to get common area
         int_roi = intersection(*self.validRoi)
         # Convert to bounds

@@ -3,8 +3,10 @@
     {
       "id": "dummy-stereo-1",
       "type": "image",
-      "path": "../data/test_images/",
-      "src": ["left01.jpg", "right01.jpg"],
+      "path": "../data/calib_images/",
+      "src": [
+         "left04.jpg",
+        "right04.jpg"],
       "enabled": true
     },
     {
@@ -268,7 +270,7 @@
       }
     },
     "cfg": "gm-sgbm",
-    "src": "dummy-stereo-4",
+    "src": "dummy-stereo-1",
     "prop": "gtmeira",
     "wlsOn": false,
     "wlsLambda": 8000,
