@@ -3,9 +3,9 @@ import cv2
 import glob
 
 class CameraCalib:
-    def __init__(self, src, src_id, dim, target):
+    def __init__(self, src, src_id, dim, target, callback):
         self.__sources = src
-        self.__src = src.get(self.src_id)
+        self.__src = src.get(src_id)
         self.target = target
         self.frame_count = 0
 
@@ -19,6 +19,9 @@ class CameraCalib:
 
         self.flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
         self.criteria = criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+        self.calib_done = False
+        self.cb = callback
     
     def is_ready(self):
         return self.frame_count == self.target
@@ -28,6 +31,8 @@ class CameraCalib:
             return
         success = 0
         frame_l, frame_r = self.__src.frames()
+        frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY)
+        frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY)
         ret_l, corners_l = cv2.findChessboardCorners(frame_l, self.dim, self.flags)
         ret_r, corners_r = cv2.findChessboardCorners(frame_r, self.dim, self.flags)
         if ret_l == True and ret_r == True:
@@ -39,9 +44,11 @@ class CameraCalib:
             self.frame_count += 1
             if self.is_ready():
                 self.__calib()
+            return True
+        return False
     
     def __calib(self):
-        if not self.is_ready():
+        if not (self.is_ready() or self.calib_done):
             return
         self.objpoints = np.array(self.objpoints)
         self.imagePoints[0] = np.array(self.imagePoints[0])
@@ -88,3 +95,4 @@ class CameraCalib:
         # Convert to bounds
         self.roi = (int_roi[1], int_roi[1] + int_roi[3],
             int_roi[0], int_roi[0] + int_roi[2])
+        self.cb()
