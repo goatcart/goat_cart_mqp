@@ -5,67 +5,70 @@ from .util_fxn import intersection
 
 class CameraCalib:
     def __init__(self, src, src_id, dim, target, callback):
+        # Vid source
         self.__sources = src
         self.__src = src.get(src_id)
+
+        # Keep track of calibration progress
         self.target = target
         self.frame_count = 0
 
-        self.dim = dim
-        self.size = self.__src.size()
+        self.dim = dim                # Size of chessboard
+        self.size = self.__src.size() # Size of input image
+        # WTF?? - I think these are the relative chessboard locations
         self.objp = np.zeros((dim[0]*dim[1],3), np.float32)
         self.objp[:,:2] = np.mgrid[0:dim[1], 0:dim[0]].T.reshape(-1,2)
 
+        # List of theoretical locations
         self.objectPoints = []
+        # List of actual locations in each camera
         self.imagePoints = [[], []]
 
-        self.flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
+        # Criteria used for ...? <--- Lookup
         self.criteria = criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-        self.calib_done = False
-        self.cb = callback
+        self.calib_done = False # Is the calibration process done
+        self.cb = callback      # Callback for when process is finished
     
+    # Return if all successfully captured all frames
     def is_ready(self):
         return self.frame_count == self.target
     
     def update(self):
         if self.is_ready():
             return
-        found = False
+        found = False # Did we successfully find the corners?
+        # Capture frames and convert them to grayscale
         frame_l, frame_r = self.__src.frames()
         frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY)
         frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY)
-        corners_l = None
-        corners_r = None
-        for scale in [1, 2]:
-            if scale == 1:
-                img_l = frame_l
-                img_r = frame_r
-            else:
-                img_l = cv2.resize(frame_l, (0,0), fx=scale, fy=scale)
-            ret_l, corners_l = cv2.findChessboardCorners(frame_l, self.dim, self.flags)
-            ret_r, corners_r = cv2.findChessboardCorners(frame_r, self.dim, self.flags)
-            found = ret_l and ret_r
-            if found:
-                if scale > 1:
-                    corners_l *= 1.0 / scale
-                    corners_r *= 1.0 / scale
-                    print('SC')
-                break
-        if found:
+        # Try to find corners
+        ret_l, corners_l = cv2.findChessboardCorners(frame_l, self.dim,
+            cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE)
+        ret_r, corners_r = cv2.findChessboardCorners(frame_r, self.dim,
+            cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE)
+        found = ret_l and ret_r
+        if found: # Found corners
+            # Relative locations of corners
             self.objectPoints.append(self.objp)
+            # Refine corner locations
             corners2l = cv2.cornerSubPix(frame_l, corners_l, (11, 11), (-1, -1), self.criteria)
             corners2r = cv2.cornerSubPix(frame_r, corners_r, (11, 11), (-1, -1), self.criteria)
+            # Add corners to list for left and right cams
             self.imagePoints[0].append(corners2l)
             self.imagePoints[1].append(corners2r)
+            # Increment number of frames successfully processed
             self.frame_count += 1
-            if self.is_ready():
+            if self.is_ready(): # If we are ready, finalize
                 self.__calib()
-            return True
-        return False
+        return found
     
+    # Finalize calibration
     def __calib(self):
+        # Don't do this if not ready or already done
         if not (self.is_ready() or self.calib_done):
             return
+        # Convert to numpy arrays/matrices
         self.objectPoints = np.array(self.objectPoints)
         self.imagePoints[0] = np.array(self.imagePoints[0])
         self.imagePoints[1] = np.array(self.imagePoints[1])
@@ -111,4 +114,9 @@ class CameraCalib:
         # Convert to bounds
         self.roi = (int_roi[1], int_roi[1] + int_roi[3],
             int_roi[0], int_roi[0] + int_roi[2])
+        self.calib_done = True
         self.cb()
+    
+    # Status string
+    def __str__(self):
+        return "[Calibrating] ({0}/{1})".format(self.frame_count, self.target)

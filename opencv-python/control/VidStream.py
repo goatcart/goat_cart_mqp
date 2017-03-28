@@ -60,9 +60,8 @@ class VidSource(SourceBase):
 
 class SourceManager:
     __streams = {}
-    def __init__(self, sources, source_props):
+    def __init__(self, sources):
         self.__sources = sources
-        self.__source_props = source_props
         for source in sources:
             if source['enabled']:
                 src = SourceBase(None)
@@ -74,9 +73,6 @@ class SourceManager:
 
     def get(self, src):
         return self.__streams[src]
-
-    def get_props(self, src_id):
-        return self.__source_props[src_id]
 
     def update(self):
         for src in self.__sources:

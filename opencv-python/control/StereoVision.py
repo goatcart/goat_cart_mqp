@@ -30,12 +30,11 @@ class StereoVision:
         self.__load_settings()
         self.__init_matcher()
 
+    # Load matcher settings
     def __load_settings(self):
         self.cfg_id   = self.__params['cfg']
         self.src_id   = self.__params['src']
-        self.prop_id  = self.__params['prop']
         self.__source = self.__sources.get(self.src_id)
-        source_props  = self.__sources.get_props(self.prop_id)
         matcher_props = self.__params['m_props'][self.cfg_id]
 
         if matcher_props['mode'] == 1:
@@ -57,7 +56,6 @@ class StereoVision:
             self.num_disp        = calc_disp(self.size[0], self.scale_factor)
         else:
             self.num_disp        = matcher_props['numDisparities']
-        print(self.num_disp, self.block_size)
         self.pre_filter_cap      = matcher_props['preFilterCap']
         self.uniqueness_ratio    = matcher_props['uniquenessRatio']
         self.disp_12_max_diff    = matcher_props['disp12MaxDiff']
@@ -71,6 +69,7 @@ class StereoVision:
         else:
             self.remap           = True
 
+    # Create the matcher(s)
     def __init_matcher(self):
         # Create matcher
         if self.mode == MatcherType.stereo_bm:
@@ -100,12 +99,14 @@ class StereoVision:
 
     def update(self):
         frame_l, frame_r = self.__source.frames()
-        if self.remap: # Undistort left + right frames
-            frame_l = cv2.remap(frame_l, self.__calib.m1_[0], self.__calib.m1_[1], cv2.INTER_LINEAR)
-            frame_r = cv2.remap(frame_r, self.__calib.m2_[0], self.__calib.m2_[1], cv2.INTER_LINEAR)
+        # Undistort
+        frame_l = cv2.remap(frame_l, self.__calib.m1_[0], self.__calib.m1_[1], cv2.INTER_LINEAR)
+        frame_r = cv2.remap(frame_r, self.__calib.m2_[0], self.__calib.m2_[1], cv2.INTER_LINEAR)
         # Convert to grayscale
         frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY).astype('uint8')
         frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY).astype('uint8')
+        self.proc_l = frame_l
+        self.proc_r = frame_r
         # Compute disparity map + crop
         disp = self.__left.compute(frame_l, frame_r)
         disp = disp[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
@@ -123,6 +124,3 @@ class StereoVision:
             self.disparity = disp.clip(min=0)
         # Scale result, and make 32-bit float (for occ grid)
         self.disparity = (self.disparity * self.factor).astype('float32')
-
-    def avg_time(self):
-        pass
