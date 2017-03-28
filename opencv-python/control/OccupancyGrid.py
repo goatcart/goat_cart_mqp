@@ -13,15 +13,16 @@ For more information on the algoritm used, look at his Master's Thesis
 https://web.wpi.edu/Pubs/ETD/Available/etd-042616-234937/unrestricted/msthesis-guilhermemeira-finalversion.pdf
 '''
 class OccupancyGrid:
-    def __init__(self, vision, occupancy_params):
+    def __init__(self, vision, calib, occupancy_params):
         self.__vision = vision
+        self.__calib = calib
         self.__cfg = occupancy_params['cfg']
         self.__c1 = occupancy_params['clean_up']
         self.__c2 = occupancy_params['dilate']
         occupancy_params = occupancy_params['o_props'][self.__cfg]
         self.__params = occupancy_params
         # Disparity-to-Depth Matrix
-        self.q_mat = vision.q
+        self.q_mat = self.__calib.q
         # Dimensions of the occupancy grid
         self.occupancy_size = tuple(occupancy_params['occupancySize'])
         # 3-D bounds of the space used to form the occupancy grid
