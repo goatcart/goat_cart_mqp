@@ -25,7 +25,7 @@ class SourceBase:
         return (480, 360)
 
     def update(self):
-        pass
+        return
 
     def frames(self):
         return self._img
@@ -46,16 +46,19 @@ class VidSource(SourceBase):
     def __init__(self, i_src):
         super().__init__(i_src)
         for i in i_src['src']:
-            cam = cv2.VideoCapture(i_src['ident'][0])
-            cam.set(cv2.CAP_PROP_FRAME_WIDTH,  i_src['src-rez'][0])
-            cam.set(cv2.CAP_PROP_FRAME_HEIGHT, i_src['src-rez'][1])
-            self.__src.add(cam)
+            cam = cv2.VideoCapture(i)
+            cam.set(cv2.CAP_PROP_FRAME_WIDTH,  i_src['rez'][0])
+            cam.set(cv2.CAP_PROP_FRAME_HEIGHT, i_src['rez'][1])
+            self.__src.append(cam)
 
     def update(self):
         for src in self.__src:
             src.grab()
         success = True
-        self._img = [frame for ret, frame in self.__src.retrieve()]
+        self._img = []
+        for src in self.__src:
+            frame, ret = src.retrieve()
+            self._img.append(frame)
 
 
 class SourceManager:
@@ -67,7 +70,7 @@ class SourceManager:
                 src = SourceBase(None)
                 if source['type'] == 'image':
                     src = ImageSource(source)
-                elif i_src['type'] == 'cap':
+                elif source['type'] == 'vid':
                     src = VidSource(source)
                 self.__streams[source['id']] = src
 
@@ -75,5 +78,5 @@ class SourceManager:
         return self.__streams[src]
 
     def update(self):
-        for src in self.__sources:
-            src.update()
+        for src in self.__streams:
+            self.__streams[src].update()

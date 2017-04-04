@@ -34,12 +34,9 @@
       "id": "webcam-stereo",
       "type": "vid",
       "src": [0, 1],
-      "fps": 30,
       "rez": [1280, 720],
       "scale": 0.45,
-      "contrib": 0.75,
-      "blur": 7,
-      "enabled": false
+      "enabled": true
     }
   ],
   "matcher": {
@@ -85,8 +82,8 @@
         "mode": 0
       }
     },
-    "cfg": "pl-sgbm",
-    "src": "dummy-stereo-1",
+    "cfg": "gm-sgbm",
+    "src": "webcam-stereo",
     "wlsOn": false,
     "wlsLambda": 8000,
     "wlsSigma": 1.0,
