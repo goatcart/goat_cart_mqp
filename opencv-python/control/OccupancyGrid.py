@@ -67,7 +67,7 @@ class OccupancyGrid:
         # Create matrices
         occupancy  = np.zeros(self.occupancy_size) # Number of points in cell
         height     = np.zeros(occupancy.shape) # Total height of elements in cell
-        disp_occ   = np.zeros(occupancy.shape, np.int16) # Final Occupancy Grid
+        disp_occ   = np.zeros(occupancy.shape, np.uint8) # Final Occupancy Grid
         lij_num    = np.zeros(occupancy.shape) # Log-odds that cell is occupied (elements)
         avg_height = np.zeros(occupancy.shape) # Average height of cell
         lij_height = np.zeros(occupancy.shape) # Log-odds that cell is occupied (height)
@@ -131,12 +131,12 @@ class OccupancyGrid:
         # This is a weighted average, so w_n + w_h = 1
         avg_prob = self.w_n * lij_num + self.w_h * lij_height
 
-        disp_occ[occupancy > 0] = 1 # Unknown
-        disp_occ[lij_num >= self.lt] = 2 # Cell is occupied (probably)
+        # disp_occ[occupancy > 0] = 127 # Unknown
+        disp_occ[lij_num >= self.lt] = 255 # Cell is occupied (probably)
         disp_occ[avg_prob < self.nt] = 0 # Nothing here (probably)
 
         # We don't care about the 'unknowns'
-        disp_occ[disp_occ == 1] = 0
+        # disp_occ[disp_occ == 127] = 0
 
         if self.__c1:
             # Get rid of small clusters by eroding, then dilating

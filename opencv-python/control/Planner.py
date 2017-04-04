@@ -21,17 +21,25 @@ class Planner:
     occupancy = None
     running = False
     calib_count = 10
+    frame_titles = ['Left', 'Right']
+    title = 'Goat Cart'
+    color = np.asarray([63, 63, 63], 'uint8')
+    textcolor = (255, 255, 255)
+    padding = 150
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    text_scale = 1
+    text_thick = 2
 
     def __init__(self, params):
         # Save params
         self.params = params
         self.src_id = params['matcher']['src']
-        self.__init_display()
         # Initialize planning components (start)
         self.vid_src = SourceManager(params['video'])
         self.calib = CameraCalib(
             self.vid_src, self.src_id,
             (7,7), 10, self.__finish_init)
+        self.window = cv2.namedWindow('GoatCart')
 
     def update(self):
         # Update cameras
@@ -40,55 +48,68 @@ class Planner:
         if self.calib.is_ready() and self.vision is not None:
             self.vision.update()
             self.occupancy.update()
-    
-    # Initialize the display
-    def __init_display(self):
-        # Create figure and connect keypress event
-        self.fig = plt.figure(1)
-        self.fig.canvas.mpl_connect('key_press_event', self.__kp)
-
-        # Add subplots
-        self.ax_l = self.fig.add_subplot(121)
-        self.ax_l.set_title('Left')
-
-        self.ax_r = self.fig.add_subplot(122)
-        self.ax_r.set_title('Right')
-
-        # Open display (ion = interactive on)
-        plt.ion()
-        plt.show()
 
     def __finish_init(self):
-        self.ax_l.set_title('Disparity Map')
-        self.ax_r.set_title('Occupancy Grid')
-        self.fig.canvas.set_window_title('Vision')
+        self.frame_titles = ['Disparity Map', 'Occupancy Grid']
+        self.title = 'CartVision TM'
         self.vision = StereoVision(self.vid_src, self.calib, self.params['matcher'])
         self.occupancy = OccupancyGrid(self.vision, self.calib, self.params['occupancyGrid'])
 
-    # Handle keypress
-    def __kp(self, evt):
-        # Quit
-        if evt.key == 'q':
-            self.fig.canvas.set_window_title('Exiting...')
-            self.running = False
-        # Use current frame as calibration keyframe
-        if evt.key == 'c' and not self.calib.is_ready():
-            self.calib.update()
-            if not self.calib.is_ready():
-                self.fig.canvas.set_window_title(str(self.calib))
+    def get_title_size(self, title):
+        return cv2.getTextSize(title, self.font, self.text_scale, self.text_thick)[0]
+
+    def combine_frames(self, frames, max_w):
+        max_w = int(max_w / len(frames))
+        f_sizes = list(map(lambda f: f.shape[:2], frames))
+        scales = list(map(lambda sz: min(max_w / sz[1], 1), f_sizes))
+        for i in range(len(frames)):
+            if scales[i] < 1:
+                f_sizes[i] = [f_sizes[i][0] * scales[i], f_sizes[i][1] * scales[i]]
+                frames[i] = cv2.resize(frames[i], tuple(f_sizes[i]))
+            if len(frames[i].shape) == 2:
+                frames[i] = cv2.cvtColor(frames[i], cv2.COLOR_GRAY2RGB)
+        size = [max(sizes) for sizes in zip(*f_sizes)]
+        max_w = min(max_w, size[1] + self.padding)
+        max_h = size[0] + self.padding
+        frame = np.ones((max_h, max_w * len(frames), 3), np.uint8) * self.color
+        for i in range(len(frames)):
+            x = int((max_w - f_sizes[i][1]) / 2) + max_w * i
+            y = int((max_h - f_sizes[i][0]) / 2)
+            h, w = f_sizes[i]
+            frame[ y : y + h, x : x + w ] = frames[i]
+            title_w, title_h = self.get_title_size(self.frame_titles[i])
+            title_loc = (x + int((w - title_w) / 2), max_h - title_h - 5)
+            cv2.putText(frame, self.frame_titles[i],
+                title_loc,
+                self.font, self.text_scale, self.textcolor, self.text_thick,
+                cv2.LINE_AA)
+        title_w, title_h = self.get_title_size(self.title)
+        cv2.putText(frame, self.title,
+            (int(max_w - title_w / 2), 20 + title_h), self.font,
+            self.text_scale, self.textcolor, self.text_thick,
+            cv2.LINE_AA)
+        return frame
+
 
     # Update display
     def render(self):
         # Calibration done, show processed output
         if self.calib.is_ready() and self.vision is not None:
-            self.ax_l.imshow(self.vision.disparity)
-            self.ax_r.imshow(self.occupancy.occupancy)
+            frames = [self.vision.disparity, self.occupancy.occupancy]
         # Still in calib mode, show raw input
         else:
-            frame_l, frame_r = self.vid_src.get(self.src_id).frames()
-            self.ax_l.imshow(cv2.cvtColor(frame_l, cv2.COLOR_BGR2RGB))
-            self.ax_r.imshow(cv2.cvtColor(frame_r, cv2.COLOR_BGR2RGB))
-        plt.pause(0.05)
+            frames = self.vid_src.get(self.src_id).frames()
+        frame = self.combine_frames(frames, 1800)
+        cv2.imshow('GoatCart', frame)
+        k = cv2.waitKey(25)
+        # Quit
+        if k == ord('q'):
+            self.running = False
+        # Use current frame as calibration keyframe
+        elif k == ord('c') and not self.calib.is_ready():
+            self.calib.update()
+            if not self.calib.is_ready():
+                self.title = str(self.calib)
 
     # Main loop
     def start(self):

@@ -33,10 +33,10 @@
     {
       "id": "webcam-stereo",
       "type": "vid",
-      "src": [0, 1],
+      "src": [1, 2],
       "rez": [1280, 720],
       "scale": 0.45,
-      "enabled": true
+      "enabled": false
     }
   ],
   "matcher": {
@@ -83,7 +83,7 @@
       }
     },
     "cfg": "gm-sgbm",
-    "src": "webcam-stereo",
+    "src": "dummy-stereo-1",
     "wlsOn": false,
     "wlsLambda": 8000,
     "wlsSigma": 1.0,

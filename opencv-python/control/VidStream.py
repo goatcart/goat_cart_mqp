@@ -57,7 +57,7 @@ class VidSource(SourceBase):
         success = True
         self._img = []
         for src in self.__src:
-            frame, ret = src.retrieve()
+            ret, frame = src.retrieve()
             self._img.append(frame)
 
 
