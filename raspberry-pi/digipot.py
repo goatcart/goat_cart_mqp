@@ -8,14 +8,27 @@ Three functions are exposed for intended use:
     - set_resistance()
     - set_mph()
 
-The digipot should be connected to the Raspberry Pi as such:
-    TODO insert ascii schematic here
+The digipot should be connected to the Raspberry Pi as below. Note that P##
+refers to the physical pin layout on the RPi, while BCM## refers to the
+Broadcomm pin numbers. The BCM numbering must be used in the module code this
+script provides.
+
+ Raspberry Pi        DS1804 Pot
++-------------+     +-----------+
+|             |     |           |
+| P16/BCM23 [---------] P1 ~INC |
+|             |     |           |
+| P18/BCM24 [---------] P2 U/~D |
+|             |     |           |
+| P24/BCM8  [---------] P7 ~CS  |
+|             |     |           |
++-------------+     +-----------+
 
 For more info: https://datasheets.maximintegrated.com/en/ds/DS1804.pdf
 """
 
 from time import sleep
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO # pylint: disable=import-error
 
 class Digipot:
     """The 'digipot' class exposes functions to permit throttle control."""
@@ -33,7 +46,7 @@ class Digipot:
         self.wiper_state = None # we'll know after setup
 
         # Set up all GPIO pins as output
-        GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BCM) # IMPORTANT: BCM means use Broadcomm numbering
         GPIO.setup(self.cs_pin, GPIO.OUT)
         GPIO.setup(self.inc_pin, GPIO.OUT)
         GPIO.setup(self.ud_pin, GPIO.OUT)
