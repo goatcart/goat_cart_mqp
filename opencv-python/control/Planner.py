@@ -50,7 +50,7 @@ class Planner:
             self.occupancy.update()
 
     def __finish_init(self):
-        self.frame_titles = ['Disparity Map', 'Occupancy Grid']
+        self.frame_titles = ['Disparity Map', 'Occupancy Grid', 'Foo']
         self.title = 'CartVision TM'
         self.vision = StereoVision(self.vid_src, self.calib, self.params['matcher'])
         self.occupancy = OccupancyGrid(self.vision, self.calib, self.params['occupancyGrid'])
@@ -59,13 +59,15 @@ class Planner:
         return cv2.getTextSize(title, self.font, self.text_scale, self.text_thick)[0]
 
     def combine_frames(self, frames, max_w):
+        frames = list(map(lambda x: x.copy(), frames))
         max_w = int(max_w / len(frames))
+        max_w_f = max_w - self.padding
         f_sizes = list(map(lambda f: f.shape[:2], frames))
-        scales = list(map(lambda sz: min(max_w / sz[1], 1), f_sizes))
+        scales = list(map(lambda sz: min(max_w_f / sz[1], 1), f_sizes))
         for i in range(len(frames)):
             if scales[i] < 1:
-                f_sizes[i] = [f_sizes[i][0] * scales[i], f_sizes[i][1] * scales[i]]
-                frames[i] = cv2.resize(frames[i], tuple(f_sizes[i]))
+                f_sizes[i] = [int(f_sizes[i][0] * scales[i]), int(f_sizes[i][1] * scales[i])]
+                frames[i] = cv2.resize(frames[i], (f_sizes[i][1], f_sizes[i][0]))
             if len(frames[i].shape) == 2:
                 frames[i] = cv2.cvtColor(frames[i], cv2.COLOR_GRAY2RGB)
         size = [max(sizes) for sizes in zip(*f_sizes)]
@@ -85,7 +87,7 @@ class Planner:
                 cv2.LINE_AA)
         title_w, title_h = self.get_title_size(self.title)
         cv2.putText(frame, self.title,
-            (int(max_w - title_w / 2), 20 + title_h), self.font,
+            (int((max_w * len(frames) - title_w) / 2), 20 + title_h), self.font,
             self.text_scale, self.textcolor, self.text_thick,
             cv2.LINE_AA)
         return frame
@@ -95,7 +97,7 @@ class Planner:
     def render(self):
         # Calibration done, show processed output
         if self.calib.is_ready() and self.vision is not None:
-            frames = [self.vision.disparity, self.occupancy.occupancy]
+            frames = [self.vision.pretty, self.occupancy.pretty]
         # Still in calib mode, show raw input
         else:
             frames = self.vid_src.get(self.src_id).frames()

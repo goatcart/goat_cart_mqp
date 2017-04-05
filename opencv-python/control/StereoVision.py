@@ -124,3 +124,4 @@ class StereoVision:
             self.disparity = disp.clip(min=0)
         # Scale result, and make 32-bit float (for occ grid)
         self.disparity = (self.disparity * self.factor).astype('float32')
+        self.pretty = self.disparity.astype('uint8')

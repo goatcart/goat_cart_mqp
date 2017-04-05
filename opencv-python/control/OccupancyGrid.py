@@ -156,3 +156,4 @@ class OccupancyGrid:
 
         # Return the occupancy grid and the point cloud
         self.occupancy = disp_occ
+        self.pretty = cv2.resize(disp_occ, (self.occupancy_size[1] * 2, self.occupancy_size[0] * 2))
