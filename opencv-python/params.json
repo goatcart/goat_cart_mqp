@@ -36,7 +36,7 @@
       "src": [1, 2],
       "rez": [1280, 720],
       "scale": 0.45,
-      "enabled": false
+      "enabled": true
     }
   ],
   "matcher": {
@@ -83,7 +83,7 @@
       }
     },
     "cfg": "gm-sgbm",
-    "src": "dummy-stereo-1",
+    "src": "webcam-stereo",
     "wlsOn": false,
     "wlsLambda": 8000,
     "wlsSigma": 1.0,

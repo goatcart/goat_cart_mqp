@@ -21,7 +21,7 @@ class SourceBase:
 
     def size(self):
         if self.__info and 'rez' in self.__info:
-            return self.__info['rez']
+            return tuple(self.__info['rez'])
         return (480, 360)
 
     def update(self):

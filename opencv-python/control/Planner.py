@@ -38,7 +38,7 @@ class Planner:
         self.vid_src = SourceManager(params['video'])
         self.calib = CameraCalib(
             self.vid_src, self.src_id,
-            (7,7), 10, self.__finish_init)
+            (8, 6), 10, self.__finish_init)
         self.window = cv2.namedWindow('GoatCart')
 
     def update(self):
@@ -59,6 +59,7 @@ class Planner:
         return cv2.getTextSize(title, self.font, self.text_scale, self.text_thick)[0]
 
     def combine_frames(self, frames, max_w):
+        # Get a copy of each frame so that original is not disturbed
         frames = list(map(lambda x: x.copy(), frames))
         max_w = int(max_w / len(frames))
         max_w_f = max_w - self.padding
