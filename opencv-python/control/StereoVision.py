@@ -99,21 +99,21 @@ class StereoVision:
 
     def update(self):
         frame_l, frame_r = self.__source.frames()
-        print(frame_l.shape)
+        frame_l = frame_l.astype('uint8')
+        frame_r = frame_r.astype('uint8')
         # Undistort
         frame_l = cv2.remap(frame_l, self.__calib.m1_[0], self.__calib.m1_[1], cv2.INTER_LINEAR)
         frame_r = cv2.remap(frame_r, self.__calib.m2_[0], self.__calib.m2_[1], cv2.INTER_LINEAR)
-        # Convert to grayscale
         frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY).astype('uint8')
         frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY).astype('uint8')
         self.proc_l = frame_l
         self.proc_r = frame_r
         # Compute disparity map + crop
         disp = self.__left.compute(frame_l, frame_r)
-        # disp = disp[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
+        disp = disp[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
         if self.wls_on:
             disp_r = self.__right.compute(frame_r, frame_l)
-            # disp_r = disp_r[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
+            disp_r = disp_r[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
             # Use a WLS (Weighted-Least Squares) to find a better depth map
             self.disparity = self.__filter.filter(
                 disparity_map_left=disp,
@@ -126,5 +126,3 @@ class StereoVision:
         # Scale result, and make 32-bit float (for occ grid)
         self.disparity = (self.disparity * self.factor).astype('float32')
         self.pretty = self.disparity.astype('uint8')
-        self.frame_l = frame_l
-        self.frame_r = frame_r

@@ -74,10 +74,8 @@ class CameraCalib:
         self.imagePoints[1] = np.array(self.imagePoints[1])
         # Get camera matrix
         cameraMatrix = [None, None]
-        cameraMatrix[0] = cv2.initCameraMatrix2D(
-            self.objectPoints, self.imagePoints[0], self.size, 0)
-        cameraMatrix[1] = cv2.initCameraMatrix2D(
-            self.objectPoints, self.imagePoints[1], self.size, 0)
+        cameraMatrix[0] = cv2.initCameraMatrix2D(self.objectPoints, self.imagePoints[0], self.size, 0)
+        cameraMatrix[1] = cv2.initCameraMatrix2D(self.objectPoints, self.imagePoints[1], self.size, 0)
         distCoeff = [np.zeros(4, np.float32), np.zeros(4, np.float32)]
         # Get camera calibration info
         rms, M1, D1, M2, D2, R, T, E, F = cv2.stereoCalibrate(

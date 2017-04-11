@@ -38,7 +38,7 @@ class Planner:
         self.vid_src = SourceManager(params['video'])
         self.calib = CameraCalib(
             self.vid_src, self.src_id,
-            (8, 6), 10, self.__finish_init)
+            (7, 7), 10, self.__finish_init)
         self.window = cv2.namedWindow('GoatCart')
 
     def update(self):
@@ -98,7 +98,7 @@ class Planner:
     def render(self):
         # Calibration done, show processed output
         if self.calib.is_ready() and self.vision is not None:
-            frames = [self.vision.frame_l, self.vision.pretty, self.occupancy.pretty, self.vision.frame_r]
+            frames = [self.vision.proc_l, self.vision.pretty, self.occupancy.pretty, self.vision.proc_r]
         # Still in calib mode, show raw input
         else:
             frames = self.vid_src.get(self.src_id).frames()
