@@ -56,8 +56,11 @@ class VidSource(SourceBase):
             src.grab()
         success = True
         self._img = []
+        scale = self.scale()
         for src in self.__src:
             ret, frame = src.retrieve()
+            if scale < 1.0:
+                frame = cv2.resize(frame, (0, 0), fx=scale, fy=scale)
             self._img.append(frame)
 
 

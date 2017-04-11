@@ -111,9 +111,11 @@ class CameraCalib:
         self.m2_ = cv2.initUndistortRectifyMap(self.cameraMatrix[1], self.distCoeff[1], self.r2, self.p2, self.size, cv2.CV_16SC2)
         # Intersect to get common area
         int_roi = intersection(*self.validRoi)
+        print(int_roi, self.validRoi, R1, R2, P1, P2, Q)
         # Convert to bounds
-        self.roi = (int_roi[1], int_roi[1] + int_roi[3],
-            int_roi[0], int_roi[0] + int_roi[2])
+        # self.roi = (int_roi[1], int_roi[1] + int_roi[3],
+        #    int_roi[0], int_roi[0] + int_roi[2])
+        self.roi = (0, 0, 0, 0)
         self.calib_done = True
         self.cb()
     

@@ -50,7 +50,7 @@ class Planner:
             self.occupancy.update()
 
     def __finish_init(self):
-        self.frame_titles = ['Disparity Map', 'Occupancy Grid', 'Foo']
+        self.frame_titles = ['Left', 'Disparity Map', 'Occupancy Grid', 'Right']
         self.title = 'CartVision TM'
         self.vision = StereoVision(self.vid_src, self.calib, self.params['matcher'])
         self.occupancy = OccupancyGrid(self.vision, self.calib, self.params['occupancyGrid'])
@@ -98,7 +98,7 @@ class Planner:
     def render(self):
         # Calibration done, show processed output
         if self.calib.is_ready() and self.vision is not None:
-            frames = [self.vision.pretty, self.occupancy.pretty]
+            frames = [self.vision.frame_l, self.vision.pretty, self.occupancy.pretty, self.vision.frame_r]
         # Still in calib mode, show raw input
         else:
             frames = self.vid_src.get(self.src_id).frames()

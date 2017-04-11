@@ -35,7 +35,7 @@
       "type": "vid",
       "src": [1, 2],
       "rez": [1280, 720],
-      "scale": 0.45,
+      "scale": 0.6,
       "enabled": true
     }
   ],

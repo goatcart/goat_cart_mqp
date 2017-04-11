@@ -61,7 +61,7 @@ class OccupancyGrid:
         # Create point cloud
         image3d = cv2.reprojectImageTo3D( \
             disparity, self.q_mat, handleMissingValues=True)
-
+        
         ### Generate matrices
         
         # Create matrices
