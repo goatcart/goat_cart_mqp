@@ -38,7 +38,7 @@ class ImageSource(SourceBase):
         super().__init__(i_src)
         path = i_src['path']
         self._img = [cv2.imread(path + src, cv2.IMREAD_COLOR) for src in i_src['src']]
-        self._shape = tuple(self._img[0].shape[:2])
+        self._shape = (self._img[0].shape[1], self._img[0].shape[0])
 
 ### Yeah, needs to be improved
 class VidSource(SourceBase):
@@ -52,7 +52,7 @@ class VidSource(SourceBase):
             self.__src.append(cam)
             rez = self._SourceBase__info['rez']
             scale = self._SourceBase__info['scale']
-            self._shape = (int(rez[0] * scale), int(rez[1] * scale))
+            self._shape = (int(rez[1] * scale), int(rez[0] * scale))
 
     def update(self):
         for src in self.__src:

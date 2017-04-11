@@ -31,7 +31,7 @@
       "enabled": true
     },
     {
-      "id": "webcam-stereo",
+      "id": "webcam-stereo-1",
       "type": "vid",
       "src": [1, 2],
       "rez": [1280, 720],
@@ -83,7 +83,7 @@
       }
     },
     "cfg": "gm-sgbm",
-    "src": "dummy-stereo-1",
+    "src": "webcam-stereo-1",
     "wlsOn": false,
     "wlsLambda": 8000,
     "wlsSigma": 1.0,

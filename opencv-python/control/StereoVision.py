@@ -104,10 +104,11 @@ class StereoVision:
         # Undistort
         frame_l = cv2.remap(frame_l, self.__calib.m1_[0], self.__calib.m1_[1], cv2.INTER_LINEAR)
         frame_r = cv2.remap(frame_r, self.__calib.m2_[0], self.__calib.m2_[1], cv2.INTER_LINEAR)
+        # Convert to grayscale
         frame_l = cv2.cvtColor(frame_l, cv2.COLOR_BGR2GRAY).astype('uint8')
         frame_r = cv2.cvtColor(frame_r, cv2.COLOR_BGR2GRAY).astype('uint8')
-        self.proc_l = frame_l
-        self.proc_r = frame_r
+        self.proc_l = frame_l[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
+        self.proc_r = frame_r[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
         # Compute disparity map + crop
         disp = self.__left.compute(frame_l, frame_r)
         disp = disp[self.__calib.roi[0]:self.__calib.roi[1], self.__calib.roi[2]:self.__calib.roi[3]]
