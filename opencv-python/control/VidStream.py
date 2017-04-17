@@ -62,7 +62,7 @@ class VidSource(SourceBase):
         scale = self.scale()
         for src in self.__src:
             ret, frame = src.retrieve()
-            frame = cv2.GaussianBlur(frame, (5, 5), 0)
+            frame = cv2.GaussianBlur(frame, (11, 11), 0)
             if scale < 1.0:
                 frame = cv2.resize(frame, (0, 0), fx=scale, fy=scale)
             self._img.append(frame)

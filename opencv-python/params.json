@@ -36,6 +36,14 @@
       "src": [1, 2],
       "rez": [1280, 720],
       "scale": 0.65,
+      "enabled": false
+    },
+    {
+      "id": "webcam-mono-1",
+      "type": "vid",
+      "src": [1],
+      "rez": [1280, 720],
+      "scale": 0.65,
       "enabled": true
     }
   ],
@@ -83,11 +91,12 @@
       }
     },
     "cfg": "gm-sgbm",
-    "src": "webcam-stereo-1",
+    "src": "webcam-mono-1",
     "wlsOn": false,
     "wlsLambda": 8000,
     "wlsSigma": 1.0,
-    "main_cam": 0
+    "main_cam": 0,
+    "proc": false
   },
   "occupancyGrid": {
     "o_props": {
