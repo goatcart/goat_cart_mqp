@@ -12,8 +12,6 @@ DEBUG = False
 class Planner:
     vid_src = None
     running = False
-    orange_c = 0
-    factor = 0.02
 
     def __init__(self, params):
         # Save params
@@ -32,12 +30,15 @@ class Planner:
     # Update display
     def render(self):
         left = self.source.frames()[0]
-        proc, cnt = detect_cone(left)
-        self.orange_c = self.orange_c * (1 - self.factor) + cnt * self.factor
-
-        gui.frame_titles[1] = 'Proc: {0:.1f}%'.format(self.orange_c*100)
+        proc, orange_c, res = detect_cone(left)
+        text = ''
+        color = [255, 255, 255]
+        if res:
+            text = ' [ STOP ]'
+            color = [0, 128, 255]
+        title = 'Orange: {:.1f}%{}'.format(orange_c*100, text)
         frames = [left, proc]
-        frame = gui.combine_frames(frames, 1800)
+        frame = gui.combine_frames(1800, (left, 'Capture'), (proc, title, color))
         cv2.imshow('GoatCart', frame)
         k = cv2.waitKey(25)
         # Quit
