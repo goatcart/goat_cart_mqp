@@ -35,7 +35,7 @@ class SourceBase:
 
 class ImageSource(SourceBase):
     def __init__(self, i_src):
-        SourceBase.__init__(self, i_src)
+        super().__init__(i_src)
         path = i_src['path']
         self._img = [cv2.imread(path + src, cv2.IMREAD_COLOR) for src in i_src['src']]
         self._shape = (self._img[0].shape[1], self._img[0].shape[0])
@@ -44,7 +44,7 @@ class ImageSource(SourceBase):
 class VidSource(SourceBase):
     __src = []
     def __init__(self, i_src):
-        SourceBase.__init__(self, i_src)
+        super().__init__(i_src)
         for i in i_src['src']:
             cam = cv2.VideoCapture(i)
             cam.set(cv2.CAP_PROP_FRAME_WIDTH,  i_src['rez'][0])
