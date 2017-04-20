@@ -19,7 +19,7 @@ def combine_frames(max_w, *frames):
     max_w = int(max_w / len(f_img))
     max_w_f = max_w - padding
     f_sizes = list(map(lambda f: f.shape[:2], f_img))
-    scales = list(map(lambda sz: min(max_w_f / sz[1], 1), f_sizes))
+    scales = list(map(lambda sz: min(float(max_w_f) / sz[1], 1), f_sizes))
     for i in range(len(f_img)):
         if scales[i] < 1:
             f_sizes[i] = [int(f_sizes[i][0] * scales[i]), int(f_sizes[i][1] * scales[i])]

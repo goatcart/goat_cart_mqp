@@ -41,7 +41,7 @@
     {
       "id": "webcam-mono-1",
       "type": "vid",
-      "src": [1],
+      "src": [0],
       "rez": [1280, 720],
       "scale": 0.65,
       "enabled": true
