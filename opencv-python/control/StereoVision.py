@@ -3,7 +3,6 @@ from cv2.ximgproc import createDisparityWLSFilterGeneric, createRightMatcher
 import numpy as np
 from enum import Enum
 import json
-from .util_fxn import load_mat, intersection
 
 def fullname(o):
   return o.__class__.__module__ + "." + o.__class__.__name__

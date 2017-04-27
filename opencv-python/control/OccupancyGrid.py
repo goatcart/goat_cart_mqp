@@ -2,7 +2,7 @@ import numpy as np
 import numpy.ma as ma
 import scipy as sp
 import cv2
-from .util_fxn import load_mat, div0
+from control.util_fxn import load_mat, div0
 from math import floor, sqrt, exp, log
 import time
 

@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import glob
-from .util_fxn import intersection
+from control.util_fxn import intersection
 
 class CameraCalib:
     def __init__(self, src, src_id, dim, target, callback):
